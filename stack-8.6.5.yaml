@@ -1,0 +1,5 @@
+resolver: lts-14.27
+packages:
+- ./context
+- ./context-http-client
+- ./context-wai-middleware

@@ -1,0 +1,51 @@
+name: context-wai-middleware
+version: '0.1.0'
+github: "jship/context/context-wai-middleware"
+license: MIT
+license-file: LICENSE.md
+copyright: 2020 (c) Jason Shipman
+author: "Jason Shipman"
+maintainer: "Jason Shipman"
+synopsis: Add request-specific (or not!) context to your WAI applications
+description: |
+  Add request-specific (or not!) context to your WAI applications.
+category: Web
+
+extra-source-files:
+- CHANGELOG.md
+- LICENSE.md
+- package.yaml
+- README.md
+
+ghc-options:
+  - -Wall
+  - -fwarn-tabs
+  - -Wincomplete-uni-patterns
+  - -Wredundant-constraints
+
+library:
+  dependencies:
+  - base >=4.12 && <5
+  - context >=0.0.0 && <1
+  - wai >=3.0.3.0 && <3.3
+  source-dirs: library
+
+tests:
+  context-wai-middleware-test-suite:
+    source-dirs: test-suite
+    main: Driver.hs
+    build-tools:
+    - hspec-discover
+    dependencies:
+    - async
+    - base
+    - bytestring
+    - case-insensitive
+    - context
+    - context-wai-middleware
+    - hspec
+    - http-client
+    - http-types
+    - stm
+    - wai
+    - warp
