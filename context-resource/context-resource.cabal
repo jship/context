@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 8a6d813ec7b733305ca7c91e65b0959de97961f204c79c623c4fba784dc95424
+-- hash: 4c714cf0cb29c5fbe31023eefa1a6807a1d20bd8996fe9bb67c4b6e898e88725
 
 name:           context-resource
 version:        0.1.0
@@ -60,5 +60,4 @@ test-suite context-resource-test-suite
     , base
     , context-resource
     , hspec
-    , stm
   default-language: Haskell2010
