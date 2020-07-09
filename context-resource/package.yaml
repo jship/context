@@ -39,5 +39,6 @@ tests:
     dependencies:
     - async
     - base
+    - context
     - context-resource
     - hspec

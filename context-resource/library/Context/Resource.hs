@@ -36,7 +36,7 @@ withProvider
   -> (Provider res -> IO a)
   -> IO a
 withProvider withRes f = do
-  Context.withNonEmptyStore (WithRes withRes) \store -> do
+  Context.withStore Context.noPropagation (Just (WithRes withRes)) \store -> do
     f Provider { store }
 
 -- | Acquire a resource from the specified 'Provider', for the duration of the
@@ -47,7 +47,8 @@ withResource Provider { store } f = do
   withRes f
 
 -- | Tell the specified 'Provider' to share the specified resource for the
--- duration of the specified action.
+-- duration of the specified action. All calls to 'withResource' within the
+-- action will return the shared resource.
 shareResource :: Provider res -> res -> IO a -> IO a
 shareResource Provider { store } resource action = do
   Context.use store (WithRes ($ resource)) action
@@ -61,4 +62,5 @@ shareResource Provider { store } resource action = do
 --
 -- 'withResource' can be used to acquire a resource from the provider, and
 -- 'shareResource' can be used to share a particular resource for the duration
--- of an action.
+-- of an action. Note that if a resource-shared action spins up new threads, the
+-- shared resource will /not/ be shared implicitly across thread boundaries.
