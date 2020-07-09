@@ -14,4 +14,4 @@ See the Haddocks of each package for more info on the libraries.
 
 [context]: https://github.com/jship/context
 [Build badge]: https://img.shields.io/travis/jship/context?logo=travis
-[build]: https://travis-ci.org/jship/context
+[build]: https://travis-ci.com/jship/context
