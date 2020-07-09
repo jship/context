@@ -13,5 +13,5 @@ their current context.
 See the Haddocks of each package for more info on the libraries.
 
 [context]: https://github.com/jship/context
-[Build badge]: https://img.shields.io/travis/jship/context?logo=travis
+[Build badge]: https://img.shields.io/travis/com/jship/context?logo=travis
 [build]: https://travis-ci.com/jship/context
