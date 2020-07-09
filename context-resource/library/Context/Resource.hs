@@ -62,5 +62,6 @@ shareResource Provider { store } resource action = do
 --
 -- 'withResource' can be used to acquire a resource from the provider, and
 -- 'shareResource' can be used to share a particular resource for the duration
--- of an action. Note that if a resource-shared action spins up new threads, the
+-- of an action. Subsequent calls to 'shareResource' in that action are
+-- idempotent. Note that if a resource-shared action spins up new threads, the
 -- shared resource will /not/ be shared implicitly across thread boundaries.

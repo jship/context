@@ -124,7 +124,7 @@ runInUnboundThread action =
 --
 -- This module provides a "Context"-compatible interface around
 -- "Control.Concurrent". Depending on the 'Context.Storage.PropagationStrategy'
--- of the 'Store', the @fork*@ and @run*@ functions in this module can
+-- of the 'Context.Store', the @fork*@ and @run*@ functions in this module can
 -- automatically propagate the calling thread's latest registered contexts, if
 -- any, over so that they are also available to the thread being created.
 --
