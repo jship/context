@@ -29,20 +29,21 @@ module Context
     -- * Exceptions
   , NotFoundException(NotFoundException, threadId)
 
+    -- * Concurrency
+  , module Context.Concurrent
+
     -- * Lower-level storage
-  , nonEmptyStore
-  , emptyStore
-  , setDefault
+  , module Context.Storage
   ) where
 
-import Context.Internal (Store, mineMay, setDefault, use)
-import Control.Concurrent (ThreadId)
+import Context.Concurrent
+import Context.Internal (Store, mineMay, use)
+import Context.Storage
 import Control.Exception (Exception)
 import Control.Monad ((<=<))
 import GHC.Generics (Generic)
 import Prelude
 import qualified Context.Internal as Internal
-import qualified Control.Concurrent as Concurrent
 import qualified Control.Exception as Exception
 
 -- | An exception which may be thrown via 'mine', 'mines', and 'adjust' when the
@@ -57,46 +58,13 @@ data NotFoundException = NotFoundException
 -- and 'adjust' are guaranteed to never throw 'NotFoundException' when applied
 -- to a non-empty 'Store'.
 withNonEmptyStore :: ctx -> (Store ctx -> IO a) -> IO a
-withNonEmptyStore = Internal.withStore . Just
+withNonEmptyStore = Internal.withStore defaultPropagation . Just
 
 -- | Provides a new, empty 'Store'. 'mine', 'mines', and 'adjust' will throw
 -- 'NotFoundException' when the calling thread has no registered context. Useful
 -- when the 'Store' will contain context values that are always thread-specific.
 withEmptyStore :: (Store ctx -> IO a) -> IO a
-withEmptyStore = Internal.withStore Nothing
-
--- | Creates a new, non-empty 'Store' that uses the specified context value as a
--- default when the calling thread has no registered context. 'mine', 'mines',
--- and 'adjust' are guaranteed to never throw 'NotFoundException' when applied
--- to a non-empty 'Store'.
---
--- This is a lower-level function and is provided /only/ to support the use case
--- of creating a non-empty 'Store' as a global:
---
--- > store :: Store Int
--- > store = unsafePerformIO $ nonEmptyStore 42
--- > {-# NOINLINE store #-}
---
--- Outside of the global variable use case, 'withNonEmptyStore' should /always/
--- be preferred over this function.
-nonEmptyStore :: ctx -> IO (Store ctx)
-nonEmptyStore = Internal.newStore . Just
-
--- | Creates a new, empty 'Store'. 'mine', 'mines', and 'adjust' will throw
--- 'NotFoundException' when the calling thread has no registered context. Useful
--- when the 'Store' will contain context values that are always thread-specific.
---
--- This is a lower-level function and is provided /only/ to support the use case
--- of creating an empty 'Store' as a global:
---
--- > store :: Store Int
--- > store = unsafePerformIO emptyStore
--- > {-# NOINLINE store #-}
---
--- Outside of the global variable use case, 'withEmptyStore' should /always/
--- be preferred over this function.
-emptyStore :: IO (Store ctx)
-emptyStore = Internal.newStore Nothing
+withEmptyStore = Internal.withStore defaultPropagation Nothing
 
 -- | Adjust the calling thread's context in the specified 'Store' for the
 -- duration of the specified action. Throws a 'NotFoundException' when the
@@ -125,7 +93,7 @@ minesMay store selector = fmap (fmap selector) $ mineMay store
 
 throwContextNotFound :: IO a
 throwContextNotFound = do
-  threadId <- Concurrent.myThreadId
+  threadId <- myThreadId
   Exception.throwIO $ NotFoundException { threadId }
 
 -- $intro
@@ -135,19 +103,18 @@ throwContextNotFound = do
 -- thread, and at any point, the calling thread may ask for its current context.
 --
 -- Note that threads in Haskell have no explicit parent-child relationship. So if
--- you register a context in a 'Store' produced by 'withEmptyStore'/'emptyStore',
--- spin up a separate thread, and from that thread you ask for a context, that
--- thread will not have a context in the 'Store'. Use "Context.Concurrent" as a
--- drop-in replacement for "Control.Concurrent" to have the library handle context
+-- you register a context in a 'Store' produced by 'withEmptyStore', spin up a
+-- separate thread, and from that thread you ask for a context, that thread will
+-- not have a context in the 'Store'. Use "Context.Concurrent" as a drop-in
+-- replacement for "Control.Concurrent" to have the library handle context
 -- propagation from one thread to another automatically. Otherwise, you must
 -- explicitly register contexts from each thread when using a 'Store' produced by
--- 'withEmptyStore'/'emptyStore'.
+-- 'withEmptyStore'.
 --
 -- If you have a default context that is always applicable to all threads, you may
--- wish to use 'withNonEmptyStore'/'nonEmptyStore'. All threads may access this
--- default context (without leveraging "Context.Concurrent" or explicitly
--- registering context for the threads) when using a 'Store' produced by
--- 'withNonEmptyStore'/'nonEmptyStore'.
+-- wish to use 'withNonEmptyStore'. All threads may access this default context
+-- (without leveraging "Context.Concurrent" or explicitly registering context
+-- for the threads) when using a 'Store' produced by 'withNonEmptyStore'.
 --
 -- Regardless of how you initialize your 'Store', every thread is free to nest its
 -- own specific context values.

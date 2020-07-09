@@ -9,6 +9,7 @@
 
 module Context.Internal
   ( Store
+  , PropagationStrategy(NoPropagation, LatestPropagation)
   , setDefault
   , mineMay
   , use
@@ -42,6 +43,13 @@ data State ctx = State
   , def :: Maybe ctx
   }
 
+-- | The 'PropagationStrategy' controls the behavior used by
+-- "Context.Concurrent" when propagating context from a "parent" thread to a new
+-- thread.
+data PropagationStrategy
+  = NoPropagation
+  | LatestPropagation
+
 -- | Set the default context value for a store. If the store was initialized as
 -- an empty store, this function converts it to a non-empty store. If the store
 -- was initialized as a non-empty store, this overwrites the default context
@@ -52,7 +60,7 @@ data State ctx = State
 -- initializing/acquiring resources:
 --
 -- > depsStore :: Store Dependencies
--- > depsStore = unsafePerformIO Context.emptyStore
+-- > depsStore = unsafePerformIO $ Context.newStore Context.defaultPropagation Nothing
 -- > {-# NOINLINE depsStore #-}
 -- >
 -- > main :: IO ()
@@ -87,17 +95,70 @@ use :: Store ctx -> ctx -> IO a -> IO a
 use store context =
   Exception.bracket_ (push context store) (pop store)
 
-withStore :: Maybe ctx -> (Store ctx -> IO a) -> IO a
-withStore mContext f = do
-  store <- newStore mContext
-  Exception.finally (f store) $ unregister registry store
+-- | Provides a new 'Store'. This is a lower-level function and is provided
+-- mainly to give library authors more fine-grained control when using a 'Store'
+-- as an implementation detail.
+--
+-- 'Context.withNonEmptyStore'/'Context.withEmptyStore' should generally be preferred over this
+-- function when acquiring a 'Store'.
+withStore
+  :: PropagationStrategy
+  -- ^ The strategy used by "Context.Concurrent" for propagating context from a
+  -- "parent" thread to a new thread.
+  -> Maybe ctx
+  -- ^ The default value for the 'Store'.
+  --
+  -- Providing a value will produce a non-empty 'Store' such that 'Context.mine',
+  -- 'Context.mines', and 'Context.adjust' are guaranteed to never throw 'Context.NotFoundException'
+  -- when applied to this 'Store'.
+  --
+  -- Providing 'Nothing' will produce an empty 'Store' such that 'Context.mine',
+  -- 'Context.mines', and 'Context.adjust' will throw 'Context.NotFoundException' when the calling
+  -- thread has no registered context. Providing 'Nothing' is useful when the
+  -- 'Store' will contain context values that are always thread-specific.
+  -> (Store ctx -> IO a)
+  -> IO a
+withStore propagationStrategy mContext f = do
+  store <- newStore propagationStrategy mContext
+  Exception.finally (f store) do
+    case propagationStrategy of
+      NoPropagation -> pure ()
+      LatestPropagation -> unregister registry store
 
-newStore :: Maybe ctx -> IO (Store ctx)
-newStore def = do
+-- | Creates a new 'Store'. This is a lower-level function and is provided
+-- /only/ to support the use case of creating a 'Store' as a global:
+--
+-- > store :: Store Int
+-- > store = unsafePerformIO $ Context.newStore Context.defaultPropagation Nothing
+-- > {-# NOINLINE store #-}
+--
+-- Outside of the global variable use case, 'Context.withNonEmptyStore',
+-- 'Context.withEmptyStore', or even the lower-level
+-- 'Context.Storage.withStore' should /always/ be preferred over this function
+-- when acquiring a 'Store'.
+newStore
+  :: PropagationStrategy
+  -- ^ The strategy used by "Context.Concurrent" for propagating context from a
+  -- "parent" thread to a new thread.
+  -> Maybe ctx
+  -- ^ The default value for the 'Store'.
+  --
+  -- Providing a value will produce a non-empty 'Store' such that 'Context.mine',
+  -- 'Context.mines', and 'Context.adjust' are guaranteed to never throw 'Context.NotFoundException'
+  -- when applied to this 'Store'.
+  --
+  -- Providing 'Nothing' will produce an empty 'Store' such that 'Context.mine',
+  -- 'Context.mines', and 'Context.adjust' will throw 'Context.NotFoundException' when the calling
+  -- thread has no registered context. Providing 'Nothing' is useful when the
+  -- 'Store' will contain context values that are always thread-specific.
+  -> IO (Store ctx)
+newStore propagationStrategy def = do
   key <- Unique.newUnique
   ref <- IORef.newIORef State { stacks = Map.empty, def }
   let store = Store { ref, key }
-  register registry store
+  case propagationStrategy of
+    NoPropagation -> pure ()
+    LatestPropagation -> register registry store
   pure store
 
 push :: ctx -> Store ctx -> IO ()

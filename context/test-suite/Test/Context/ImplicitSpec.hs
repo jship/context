@@ -28,7 +28,7 @@ data Thing = Thing
   } deriving stock (Eq, Show)
 
 store :: Store Thing
-store = unsafePerformIO Context.emptyStore
+store = unsafePerformIO $ Context.newStore Context.defaultPropagation Nothing
 {-# NOINLINE store #-}
 
 instance IP "contextStore" (Store Thing) where

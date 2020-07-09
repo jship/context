@@ -25,25 +25,23 @@ module Context.Implicit
     -- * Exceptions
   , NotFoundException(NotFoundException, threadId)
 
+    -- * Concurrency
+  , module Context.Concurrent
+
     -- * Lower-level storage
-  , nonEmptyStore
-  , emptyStore
-  , setDefault
+  , module Context.Storage
   ) where
 
-import Context
-  ( NotFoundException(NotFoundException, threadId), emptyStore, nonEmptyStore, withEmptyStore
-  , withNonEmptyStore
-  )
-import Context.Internal (Store)
+import Context (NotFoundException(NotFoundException, threadId), Store, withEmptyStore, withNonEmptyStore)
+import Context.Concurrent
+import Context.Storage
 import Prelude
 import qualified Context
-import qualified Context.Internal as Internal
 
 -- | Register a context in the implicit 'Store' on behalf of the calling
 -- thread, for the duration of the specified action.
 use :: (?contextStore :: Store ctx) => ctx -> IO a -> IO a
-use = Internal.use ?contextStore
+use = Context.use ?contextStore
 
 -- | Adjust the calling thread's context in the implicit 'Store' for the
 -- duration of the specified action. Throws a 'NotFoundException' when the
@@ -66,35 +64,12 @@ mines = Context.mines ?contextStore
 -- | Provide the calling thread its current context from the implicit
 -- 'Store', if present.
 mineMay :: (?contextStore :: Store ctx) => IO (Maybe ctx)
-mineMay = Internal.mineMay ?contextStore
+mineMay = Context.mineMay ?contextStore
 
 -- | Provide the calling thread a selection from its current context in the
 -- implicit 'Store', if present.
 minesMay :: (?contextStore :: Store ctx) => (ctx -> a) -> IO (Maybe a)
 minesMay = Context.minesMay ?contextStore
-
--- | Set the default context value for the implicit store. If the store was
--- initialized as an empty store, this function converts it to a non-empty
--- store. If the store was initialized as a non-empty store, this overwrites
--- the default context value.
---
--- One common use case for this function is to convert an empty store in a
--- global variable to a non-empty store while the application is
--- initializing/acquiring resources:
---
--- > depsStore :: Store Dependencies
--- > depsStore = unsafePerformIO Context.emptyStore
--- > {-# NOINLINE depsStore #-}
--- >
--- > main :: IO ()
--- > main = do
--- >   let config = -- ...
--- >   withDependencies config \deps -> do
--- >     let ?contextStore = depsStore
--- >     Context.setDefault deps
--- >     -- ...
-setDefault :: (?contextStore :: Store ctx) => ctx -> IO ()
-setDefault = Internal.setDefault ?contextStore
 
 -- $intro
 --
@@ -106,7 +81,7 @@ setDefault = Internal.setDefault ?contextStore
 --
 -- > import qualified Context.Implicit
 --
--- If you are only working with an implicit 'Store' in your application, you might
+-- If you are only working with an implicit 'Store' in your application, you may
 -- prefer shortening the import name:
 --
 -- > import qualified Context.Implicit as Context
@@ -138,7 +113,7 @@ setDefault = Internal.setDefault ?contextStore
 -- > data Dependencies = -- ...
 -- >
 -- > depsStore :: Store Dependencies
--- > depsStore = unsafePerformIO Context.emptyStore
+-- > depsStore = unsafePerformIO $ Context.newStore Context.defaultPropagation Nothing
 -- > {-# NOINLINE depsStore #-}
 -- >
 -- > instance IP "contextStore" (Store Dependencies) where

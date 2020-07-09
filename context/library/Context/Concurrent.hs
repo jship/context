@@ -123,10 +123,11 @@ runInUnboundThread action =
 -- $intro
 --
 -- This module provides a "Context"-compatible interface around
--- "Control.Concurrent". The @fork*@ and @run*@ functions in this module will
--- automatically propagate the calling thread's latest registered contexts, if any,
--- over so that they are also available to the thread being created.
+-- "Control.Concurrent". Depending on the 'Context.Storage.PropagationStrategy'
+-- of the 'Store', the @fork*@ and @run*@ functions in this module can
+-- automatically propagate the calling thread's latest registered contexts, if
+-- any, over so that they are also available to the thread being created.
 --
 -- This module is designed to be a drop-in replacement for "Control.Concurrent" so
 -- that users only have to import this module instead of both this module and
--- "Control.Concurrent".
+-- "Control.Concurrent". It is also re-exported from "Context" for convenience.
