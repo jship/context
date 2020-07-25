@@ -12,9 +12,12 @@ module Context.Resource
     Provider
   , withProvider
 
-    -- * Operations
+    -- * Core operations
   , withResource
   , shareResource
+
+    -- * Convenience
+  , withSharedResource
   ) where
 
 import Prelude
@@ -47,11 +50,22 @@ withResource Provider { store } f = do
   withRes f
 
 -- | Tell the specified 'Provider' to share the specified resource for the
--- duration of the specified action. All calls to 'withResource' within the
--- action will return the shared resource.
+-- duration of the specified action. All calls to 'withResource' (or
+-- 'withSharedResource') within the action will return the shared resource.
 shareResource :: Provider res -> res -> IO a -> IO a
 shareResource Provider { store } resource action = do
   Context.use store (WithRes ($ resource)) action
+
+-- | Acquire a resource from the specified 'Provider' and share that resource
+-- for the duration of the specified action. All calls to 'withResource' (or
+-- 'withSharedResource') within the action will return the shared resource.
+--
+-- This is a convenience function combining 'withResource' and 'shareResource'.
+withSharedResource :: Provider res -> (res -> IO a) -> IO a
+withSharedResource provider f = do
+  withResource provider \resource -> do
+    shareResource provider resource do
+      f resource
 
 -- $intro
 --
@@ -65,3 +79,8 @@ shareResource Provider { store } resource action = do
 -- of an action. Subsequent calls to 'shareResource' in that action are
 -- idempotent. Note that if a resource-shared action spins up new threads, the
 -- shared resource will /not/ be shared implicitly across thread boundaries.
+--
+-- While 'shareResource' offers the most control over resource-sharing,
+-- 'withSharedResource' can be used as a convenience in the relatively common
+-- case where a resource is acquired and then immediately shared within an
+-- inner action.
