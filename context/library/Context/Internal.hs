@@ -92,8 +92,7 @@ mineMayOnDefault onDefault Store { ref } = do
 -- | Register a context in the specified 'Store' on behalf of the calling
 -- thread, for the duration of the specified action.
 use :: Store ctx -> ctx -> IO a -> IO a
-use store context =
-  Exception.bracket_ (push context store) (pop store)
+use store context = Exception.bracket_ (push store context) (pop store)
 
 -- | Provides a new 'Store'. This is a lower-level function and is provided
 -- mainly to give library authors more fine-grained control when using a 'Store'
@@ -161,8 +160,8 @@ newStore propagationStrategy def = do
     LatestPropagation -> register registry store
   pure store
 
-push :: ctx -> Store ctx -> IO ()
-push context Store { ref } = do
+push :: Store ctx -> ctx -> IO ()
+push Store { ref } context = do
   threadId <- Concurrent.myThreadId
   IORef.atomicModifyIORef' ref \state@State { stacks } ->
     case Map.lookup threadId stacks of
