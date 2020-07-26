@@ -8,14 +8,34 @@
 {-# LANGUAGE StrictData #-}
 
 module Context.Internal
-  ( Store
-  , PropagationStrategy(NoPropagation, LatestPropagation)
-  , setDefault
-  , mineMay
-  , use
+  ( -- * Disclaimer
+    -- $disclaimer
+
+    -- ** Store-related
+    Store(Store, ref, key)
+  , State(State, stacks, def)
   , withStore
   , newStore
+  , use
+  , push
+  , pop
+  , mineMay
+  , mineMayOnDefault
+  , setDefault
+
+    -- ** Propagation-related
+  , PropagationStrategy(NoPropagation, LatestPropagation)
+  , Registry(Registry, ref)
+  , AnyStore(MkAnyStore)
+  , registry
+  , emptyRegistry
   , withPropagator
+  , withRegisteredPropagator
+  , register
+  , unregister
+
+    -- ** Miscellaneous
+  , bug
   ) where
 
 import Control.Concurrent (ThreadId)
@@ -243,3 +263,9 @@ bug prefix =
   error
     $ "Context." <> prefix <> ": Impossible! (if you see this message, please "
         <> "report it as a bug at https://github.com/jship/context)"
+
+-- $disclaimer
+--
+-- In general, changes to this module will not be reflected in the library's
+-- version updates. Direct use of this module should be done with /extreme/ care
+-- as it becomes very easy to violate the library's invariants.

@@ -30,11 +30,6 @@ library:
   - base >=4.12 && <5
   - containers >=0.6.0.1 && <0.7
   source-dirs: library
-  exposed-modules:
-  - Context
-  - Context.Concurrent
-  - Context.Implicit
-  - Context.Storage
 
 tests:
   context-test-suite:
