@@ -1,5 +1,5 @@
 name: context-resource
-version: '0.1.0'
+version: '0.1.0.0'
 github: "jship/context/context-resource"
 license: MIT
 license-file: LICENSE.md
