@@ -24,6 +24,8 @@ import Prelude
 import qualified Context
 
 -- | An opaque resource provider.
+--
+-- @since 0.1.0.0
 newtype Provider res = Provider
   { store :: Context.Store (WithRes res)
   }
@@ -34,6 +36,8 @@ newtype WithRes res = WithRes (forall r. (res -> IO r) -> IO r)
 -- with a resource 'Provider'. This 'Provider' should ideally be long-lived and
 -- threaded throughout the application to the components that need to acquire
 -- resources.
+--
+-- @since 0.1.0.0
 withProvider
   :: (forall r. (res -> IO r) -> IO r)
   -> (Provider res -> IO a)
@@ -44,6 +48,8 @@ withProvider withRes f = do
 
 -- | Acquire a resource from the specified 'Provider', for the duration of the
 -- specified action.
+--
+-- @since 0.1.0.0
 withResource :: Provider res -> (res -> IO a) -> IO a
 withResource Provider { store } f = do
   WithRes withRes <- Context.mine store
@@ -52,6 +58,8 @@ withResource Provider { store } f = do
 -- | Tell the specified 'Provider' to share the specified resource for the
 -- duration of the specified action. All calls to 'withResource' (or
 -- 'withSharedResource') within the action will return the shared resource.
+--
+-- @since 0.1.0.0
 shareResource :: Provider res -> res -> IO a -> IO a
 shareResource Provider { store } resource action = do
   Context.use store (WithRes ($ resource)) action
@@ -61,6 +69,8 @@ shareResource Provider { store } resource action = do
 -- 'withSharedResource') within the action will return the shared resource.
 --
 -- This is a convenience function combining 'withResource' and 'shareResource'.
+--
+-- @since 0.1.0.0
 withSharedResource :: Provider res -> (res -> IO a) -> IO a
 withSharedResource provider f = do
   withResource provider \resource -> do

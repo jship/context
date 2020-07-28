@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 696431b781a6a3de7be6add1391b971189e89100dd746624e238628f320509b7
+-- hash: 402f8eded58ae9b921e8d899368a09ce17ec0777f49fb810766e91cdaeb4e7f4
 
 name:           context-wai-middleware
-version:        0.1.0
+version:        0.1.0.0
 synopsis:       Add request-specific (or not!) context to your WAI applications
 description:    Add request-specific (or not!) context to your WAI applications.
 category:       Web
@@ -40,7 +40,7 @@ library
   ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base >=4.12 && <5
-    , context >=0.0.0 && <1
+    , context >=0.1.0.0 && <0.2
     , wai >=3.0.3.0 && <3.3
   default-language: Haskell2010
 

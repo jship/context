@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 55e870632df3cf52e645804d049a6743aa898f4e9585ba6b2cf345d11bbc34cd
+-- hash: 25e9584bac69d5f10c59d16e951839e19321a6ec9958b9edf594a1256b310ff9
 
 name:           context-resource
-version:        0.1.0
+version:        0.1.0.0
 synopsis:       Thread-safe, pool-compatible resource provider
 description:    A thread-safe, pool-compatible resource provider abstraction that supports
                 resource-sharing within nested actions.
@@ -41,7 +41,7 @@ library
   ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base >=4.12 && <5
-    , context >=0.0.0 && <1
+    , context >=0.1.0.0 && <0.2
   default-language: Haskell2010
 
 test-suite context-resource-test-suite

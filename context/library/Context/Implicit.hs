@@ -40,34 +40,46 @@ import qualified Context
 
 -- | Register a context in the implicit 'Store' on behalf of the calling
 -- thread, for the duration of the specified action.
+--
+-- @since 0.1.0.0
 use :: (?contextStore :: Store ctx) => ctx -> IO a -> IO a
 use = Context.use ?contextStore
 
 -- | Adjust the calling thread's context in the implicit 'Store' for the
 -- duration of the specified action. Throws a 'NotFoundException' when the
 -- calling thread has no registered context.
+--
+-- @since 0.1.0.0
 adjust :: (?contextStore :: Store ctx) => (ctx -> ctx) -> IO a -> IO a
 adjust = Context.adjust ?contextStore
 
 -- | Provide the calling thread its current context from the implicit
 -- 'Store'. Throws a 'NotFoundException' when the calling thread has no
 -- registered context.
+--
+-- @since 0.1.0.0
 mine :: (?contextStore :: Store ctx) => IO ctx
 mine = Context.mine ?contextStore
 
 -- | Provide the calling thread a selection from its current context in the
 -- implicit 'Store'. Throws a 'NotFoundException' when the calling
 -- thread has no registered context.
+--
+-- @since 0.1.0.0
 mines :: (?contextStore :: Store ctx) => (ctx -> a) -> IO a
 mines = Context.mines ?contextStore
 
 -- | Provide the calling thread its current context from the implicit
 -- 'Store', if present.
+--
+-- @since 0.1.0.0
 mineMay :: (?contextStore :: Store ctx) => IO (Maybe ctx)
 mineMay = Context.mineMay ?contextStore
 
 -- | Provide the calling thread a selection from its current context in the
 -- implicit 'Store', if present.
+--
+-- @since 0.1.0.0
 minesMay :: (?contextStore :: Store ctx) => (ctx -> a) -> IO (Maybe a)
 minesMay = Context.minesMay ?contextStore
 

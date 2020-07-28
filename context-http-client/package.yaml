@@ -26,7 +26,7 @@ ghc-options:
 library:
   dependencies:
   - base >=4.12 && <5
-  - context >=0.0.0 && <1
+  - context >=0.1.0.0 && <0.2
   - http-client >=0.5.13.1 && <0.8
   source-dirs: library
 

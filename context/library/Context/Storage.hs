@@ -26,6 +26,8 @@ import Context.Internal (PropagationStrategy(LatestPropagation, NoPropagation), 
 -- 'PropagationStrategy', "Context.Concurrent" will automatically propagate the
 -- "parent" thread's latest context value from this 'Context.Store' so that that context
 -- is accessible in a newly-created thread.
+--
+-- @since 0.1.0.0
 defaultPropagation :: PropagationStrategy
 defaultPropagation = LatestPropagation
 
@@ -33,6 +35,8 @@ defaultPropagation = LatestPropagation
 -- initialized with this 'PropagationStrategy', "Context.Concurrent" will /not/
 -- propagate the "parent" thread's context values from this 'Context.Store' in any way
 -- to the newly-created thread.
+--
+-- @since 0.1.0.0
 noPropagation :: PropagationStrategy
 noPropagation = NoPropagation
 

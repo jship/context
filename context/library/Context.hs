@@ -48,6 +48,8 @@ import qualified Control.Exception as Exception
 
 -- | An exception which may be thrown via 'mine', 'mines', and 'adjust' when the
 -- calling thread does not have a registered context.
+--
+-- @since 0.1.0.0
 data NotFoundException = NotFoundException
   { threadId :: ThreadId
   } deriving stock (Eq, Generic, Show)
@@ -57,18 +59,24 @@ data NotFoundException = NotFoundException
 -- default when the calling thread has no registered context. 'mine', 'mines',
 -- and 'adjust' are guaranteed to never throw 'NotFoundException' when applied
 -- to a non-empty 'Store'.
+--
+-- @since 0.1.0.0
 withNonEmptyStore :: ctx -> (Store ctx -> IO a) -> IO a
 withNonEmptyStore = Internal.withStore defaultPropagation . Just
 
 -- | Provides a new, empty 'Store'. 'mine', 'mines', and 'adjust' will throw
 -- 'NotFoundException' when the calling thread has no registered context. Useful
 -- when the 'Store' will contain context values that are always thread-specific.
+--
+-- @since 0.1.0.0
 withEmptyStore :: (Store ctx -> IO a) -> IO a
 withEmptyStore = Internal.withStore defaultPropagation Nothing
 
 -- | Adjust the calling thread's context in the specified 'Store' for the
 -- duration of the specified action. Throws a 'NotFoundException' when the
 -- calling thread has no registered context.
+--
+-- @since 0.1.0.0
 adjust :: Store ctx -> (ctx -> ctx) -> IO a -> IO a
 adjust store f action = do
   adjustedContext <- mines store f
@@ -77,17 +85,23 @@ adjust store f action = do
 -- | Provide the calling thread its current context from the specified
 -- 'Store'. Throws a 'NotFoundException' when the calling thread has no
 -- registered context.
+--
+-- @since 0.1.0.0
 mine :: Store ctx -> IO ctx
 mine = maybe throwContextNotFound pure <=< mineMay
 
 -- | Provide the calling thread a selection from its current context in the
 -- specified 'Store'. Throws a 'NotFoundException' when the calling
 -- thread has no registered context.
+--
+-- @since 0.1.0.0
 mines :: Store ctx -> (ctx -> a) -> IO a
 mines store = maybe throwContextNotFound pure <=< minesMay store
 
 -- | Provide the calling thread a selection from its current context in the
 -- specified 'Store', if present.
+--
+-- @since 0.1.0.0
 minesMay :: Store ctx -> (ctx -> a) -> IO (Maybe a)
 minesMay store selector = fmap (fmap selector) $ mineMay store
 

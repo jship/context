@@ -24,6 +24,8 @@ import qualified Network.Wai as Wai
 --
 -- Endpoints can access their context from the middleware via `Context.mine'
 -- and friends.
+--
+-- @since 0.1.0.0
 addRequestContext
   :: Context.Store ctx
   -> (Wai.Request -> IO ctx)
@@ -41,6 +43,8 @@ addRequestContext contextStore mkContext app = \request sendResponse -> do
 --
 -- Endpoints can access their context from the middleware via `Context.mineMay'
 -- and friends.
+--
+-- @since 0.1.0.0
 addRequestContextMay
   :: Context.Store ctx
   -> (Wai.Request -> IO (Maybe ctx))
@@ -60,6 +64,8 @@ addRequestContextMay contextStore mkContext app = \request sendResponse -> do
 --
 -- Endpoints can access their context from the middleware via `Context.mine'
 -- and friends.
+--
+-- @since 0.1.0.0
 addContext :: Context.Store ctx -> IO ctx -> Wai.Middleware
 addContext contextStore mkContext app = \request sendResponse -> do
   context <- mkContext

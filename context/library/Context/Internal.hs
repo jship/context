@@ -53,6 +53,8 @@ import qualified Data.Traversable as Traversable
 import qualified Data.Unique as Unique
 
 -- | Opaque type that manages thread-indexed storage of context values.
+--
+-- @since 0.1.0.0
 data Store ctx = Store
   { ref :: IORef (State ctx)
   , key :: Unique
@@ -66,6 +68,8 @@ data State ctx = State
 -- | The 'PropagationStrategy' controls the behavior used by
 -- "Context.Concurrent" when propagating context from a "parent" thread to a new
 -- thread.
+--
+-- @since 0.1.0.0
 data PropagationStrategy
   = NoPropagation
   | LatestPropagation
@@ -89,6 +93,8 @@ data PropagationStrategy
 -- >   withDependencies config \deps -> do
 -- >     Context.setDefault depsStore deps
 -- >     -- ...
+--
+-- @since 0.1.0.0
 setDefault :: Store ctx -> ctx -> IO ()
 setDefault Store { ref } context = do
   IORef.atomicModifyIORef' ref \state ->
@@ -96,6 +102,8 @@ setDefault Store { ref } context = do
 
 -- | Provide the calling thread its current context from the specified
 -- 'Store', if present.
+--
+-- @since 0.1.0.0
 mineMay :: Store ctx -> IO (Maybe ctx)
 mineMay = mineMayOnDefault id
 
@@ -111,6 +119,8 @@ mineMayOnDefault onDefault Store { ref } = do
 
 -- | Register a context in the specified 'Store' on behalf of the calling
 -- thread, for the duration of the specified action.
+--
+-- @since 0.1.0.0
 use :: Store ctx -> ctx -> IO a -> IO a
 use store context = Exception.bracket_ (push store context) (pop store)
 
@@ -120,6 +130,8 @@ use store context = Exception.bracket_ (push store context) (pop store)
 --
 -- 'Context.withNonEmptyStore'/'Context.withEmptyStore' should generally be preferred over this
 -- function when acquiring a 'Store'.
+--
+-- @since 0.1.0.0
 withStore
   :: PropagationStrategy
   -- ^ The strategy used by "Context.Concurrent" for propagating context from a
@@ -155,6 +167,8 @@ withStore propagationStrategy mContext f = do
 -- 'Context.withEmptyStore', or even the lower-level
 -- 'Context.Storage.withStore' should /always/ be preferred over this function
 -- when acquiring a 'Store'.
+--
+-- @since 0.1.0.0
 newStore
   :: PropagationStrategy
   -- ^ The strategy used by "Context.Concurrent" for propagating context from a

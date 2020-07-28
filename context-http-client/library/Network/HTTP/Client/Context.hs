@@ -17,6 +17,8 @@ import qualified Network.HTTP.Client as HTTP.Client
 -- Note that the modifying function can be called multiple times, so be sure to
 -- define your function to first check if the 'Request' needs modification. See
 -- 'HTTP.Client.managerModifyRequest' for details.
+--
+-- @since 0.1.0.0
 modifyRequestsWithContext
   :: Context.Store ctx
   -> (Maybe ctx -> Request -> IO Request)
@@ -38,6 +40,8 @@ modifyRequestsWithContext contextStore updateRequest managerSettings =
 
 -- | Update the provided 'ManagerSettings' to modify all incoming 'Response'
 -- values, utilizing the calling thread's registered context if present.
+--
+-- @since 0.1.0.0
 modifyResponsesWithContext
   :: Context.Store ctx
   -> (Maybe ctx -> Response BodyReader -> IO (Response BodyReader))

@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 344aa2c31d7a153c893341f027639d4828201253721a3f89967d18b75f0c0fbf
+-- hash: f039a0aad49f186ced980c33e32c16906b02598865a644fb1142fda2f631183d
 
 name:           context
-version:        0.1.0
+version:        0.1.0.0
 synopsis:       Thread-indexed, nested contexts
 description:    Thread-indexed storage around arbitrary context values. The interface supports
                 nesting context values per thread, and at any point, the calling thread may
