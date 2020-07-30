@@ -35,7 +35,7 @@ The `context` package provides:
 
 . . .
 
-Let's dive in on each one of these points.
+Let's dive in on these.
 
 ## Thread-indexed storage 🧵 + 🔑 + 📦
 
@@ -57,16 +57,16 @@ values of whatever specific type we're interested in.
 
 . . .
 
-We can acquire an **empty**  `Store` value via `withEmptyStore`:
+We can acquire a **non-empty**  `Store` value via `withNonEmptyStore`:
 
 ```haskell
-withEmptyStore :: (Store ctx -> IO a) -> IO a
+withNonEmptyStore :: ctx -> (Store ctx -> IO a) -> IO a
 ```
 
 ## Thread-indexed storage 🧵 + 🔑 + 📦
 
-We can register context in a `Store` on behalf of the calling thread via
-`use`, **for the duration of the provided action**:
+We can register context in a `Store` on behalf of the **calling thread**
+via `use`, **for the duration of the provided action**:
 
 ```haskell
 use :: Store ctx -> ctx -> IO a -> IO a
@@ -89,7 +89,7 @@ data Thing = Thing
 
 main :: IO ()
 main = do
-  Context.withEmptyStore \store -> do
+  Context.withNonEmptyStore Thing { stuff = 0 } \store -> do
     Context.use store Thing { stuff = 1 } do
       -- ...
 ```
@@ -114,7 +114,7 @@ data Thing = Thing
 
 main :: IO ()
 main = do
-  Context.withEmptyStore \store -> do
+  Context.withNonEmptyStore Thing { stuff = 0 } \store -> do
     Context.use store Thing { stuff = 1 } do
       Context.use store Thing { stuff = 2 } do
         -- ...
@@ -142,7 +142,7 @@ data Thing = Thing
 
 main :: IO ()
 main = do
-  Context.withEmptyStore \store -> do
+  Context.withNonEmptyStore Thing { stuff = 0 } \store -> do
     Context.use store Thing { stuff = 1 } do
       Context.use store Thing { stuff = 2 } do
         thing2 <- Context.mine store
@@ -153,61 +153,10 @@ main = do
 
 ## Context retrieval 🙋‍♀️
 
-What happens if we try to retrieve context before any has been registered?
+What happens if we try to retrieve context before any has been
+registered via `use`?
 
 . . .
-
-```haskell
-data Thing = Thing
-  { stuff :: Int
-  }
-
-main :: IO ()
-main = do
-  Context.withEmptyStore \store -> do
-    thingy <- Context.mine store  -- Git rekt!!!
-    Context.use store Thing { stuff = 1 } do
-      Context.use store Thing { stuff = 2 } do
-        thing2 <- Context.mine store
-        -- ...
-      number1 <- Context.mines store stuff
-      -- ...
-```
-
-. . .
-
-ANSWER! A `NotFoundException` is thrown and the app go 💥.
-
-## Context retrieval 🙋‍♀️
-
-We can avoid the app exploding into flames in a few ways.
-
-. . .
-
-One option (besides catching the exception) is to leverage friends of
-`mine` and `mines`:
-
-```haskell
-mineMay  :: Store ctx -> IO (Maybe ctx)
-minesMay :: Store ctx -> (ctx -> a) -> IO (Maybe a)
-```
-
-. . .
-
-These functions are guaranteed to never throw a `NotFoundException`, but
-the onus is on us to handle the `Nothing` case.
-
-## Context retrieval 🙋‍♀️
-
-We couuuuuuld do that and go full `Maybe` with things, but:
-
-- It ain't no fun
-- We often have some base context applicable to all threads
-- Really though, it ain't no fun
-
-. . .
-
-Enter `withNonEmptyStore`:
 
 ```haskell
 data Thing = Thing
@@ -217,7 +166,7 @@ data Thing = Thing
 main :: IO ()
 main = do
   Context.withNonEmptyStore Thing { stuff = 0 } \store -> do
-    thing0 <- Context.mine store  -- Did not git rekt!!!
+    isItThing0QuestionMark <- Context.mine store
     Context.use store Thing { stuff = 1 } do
       Context.use store Thing { stuff = 2 } do
         thing2 <- Context.mine store
@@ -226,19 +175,11 @@ main = do
       -- ...
 ```
 
-## Context retrieval 🙋‍♀️
-
-Acquiring a **non-empty store** requires specifying a context value to
-use as a default when the calling thread has no registered context.
-
-```haskell
-withNonEmptyStore :: ctx -> (Store ctx -> IO a) -> IO a
-```
-
 . . .
 
-`mine` and `mines` are guaranteed to never throw a `NotFoundException`
-when applied to a **non-empty** `Store`. 🥳
+ANSWER! The default context in a **non-empty** store is the value
+provided by `mine` and friends when the calling thread has no registered
+context.
 
 ## Context propagation 🧵💌🧵
 
@@ -252,33 +193,6 @@ registered context, and from the "child" thread we ask for context?
 . . .
 
 ```haskell
-import qualified Control.Concurrent as Concurrent
-
-data Thing = Thing
-  { stuff :: Int
-  }
-
-main :: IO ()
-main = do
-  Context.withEmptyStore \store -> do
-    Context.use store Thing { stuff = 1 } do
-      threadId <- Concurrent.forkIO do
-        isItThing1QuestionMark <- Context.mine store
-        -- ...
-```
-
-. . .
-
-ANSWER! A `NotFoundException` is thrown and the app go 💥.
-
-## Context propagation 🧵💌🧵
-
-But we avoided 💥-ing before via `withNonEmptyStore`. Let's try that out 
-here too:
-
-. . .
-
-```haskell
 data Thing = Thing
   { stuff :: Int
   }
@@ -288,15 +202,14 @@ main = do
   Context.withNonEmptyStore Thing { stuff = 0 } \store -> do
     Context.use store Thing { stuff = 1 } do
       threadId <- Concurrent.forkIO do
-        thing0 <- Context.mine store
+        isItThing0OrThing1QuestionMark <- Context.mine store
         -- ...
 ```
 
 . . .
 
-The default context in a **non-empty** store is just that: a default
-value to use in the case when the calling thread has no registered
-context.
+ANSWER! Just like before, we get back our **non-empty** `Store`'s
+default context value.
 
 ## Context propagation 🧵💌🧵
 
@@ -585,10 +498,12 @@ import qualified Database.PostgreSQL.Config as PG
 
 ## Resource-sharing
 
-Imagine we have a small DB interface for users and talks:
+Imagine we have a DB interface for users and talks:
 
 ```haskell
-data User = User { userName :: Text }
+data User = User
+  { userName :: Text
+  }
 
 newtype UserKey = UserKey { unUserKey :: Text }
 
@@ -636,8 +551,7 @@ But is there a problem?
 . . .
 
 ANSWER! There is no way for us to share the same connection across the
-calls to `addUser` and `addTalk` (without some really annoying hacks,
-that is).
+calls to `addUser` and `addTalk` (without some really annoying hacks).
 
 ## Resource-sharing
 
@@ -899,8 +813,8 @@ main = do
     -- ...
 ```
 
-In the above, `addUser` and `addTalk` are each grabbing fresh
-`Connection`s.
+In the above, `addUser` and `addTalk` are each potentially grabbing
+different `Connection`s.
 
 ## Resource-sharing
 
@@ -1147,7 +1061,7 @@ the `JWTClaims` in the explicit case.
 
 ## `servant` tidiness
 
-It's probably no surprise at this point, but `context` can help.
+`context` can help!
 
 . . .
 
@@ -1181,7 +1095,7 @@ mkIOServer :: Context.Store JWTClaims -> Service
 mkIOServer jwtClaimsStore =
   Service
     { newAttendee = \attendee -> do
-        requestingJWTClaims <- Context.mine jwtClaimsStore
+        requestorJWTClaims <- Context.mine jwtClaimsStore
         -- ... do stuff
 
       -- ... and so on
