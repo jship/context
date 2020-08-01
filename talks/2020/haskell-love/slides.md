@@ -1242,9 +1242,8 @@ mineMay Store { ref } = do
 
 ## How it works according to the code
 
-We saw `withEmptyStore` and `withNonEmptyStore` previously, and
-these two functions are both implemented in terms of the lower-level
-`withStore`:
+We saw `withNonEmptyStore` previously, and this function is implemented
+in terms of the lower-level `withStore`:
 
 . . .
 
