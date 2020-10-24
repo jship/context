@@ -245,11 +245,12 @@ pop Store { ref } = do
       Just (_context : rest) ->
         (state { stacks = Map.insert threadId rest stacks }, ())
 
--- | A 'View' provides a read-only view into a 'Store'. 'View' trades the
--- 'Store' ability to register new context for the ability to arbitrarily
--- transform context values locally to the 'View'.
+-- | A 'Context.View.View' provides a read-only view into a 'Context.Store'.
+-- 'Context.View.View' trades the 'Context.Store' ability to register new
+-- context for the ability to arbitrarily transform context values locally to
+-- the 'Context.View.View'.
 --
--- @since 0.2.0.0
+-- @since 0.1.1.0
 data View ctx where
   MkView :: (ctx' -> ctx) -> Store ctx' -> View ctx
 
@@ -257,24 +258,24 @@ instance Functor View where
   fmap g (MkView f store) = MkView (g . f) store
 
 -- | Provide the calling thread a view of its current context from the specified
--- 'View'. Throws a 'Context.NotFoundException' when the calling thread has no
--- registered context.
+-- 'Context.View.View'. Throws a 'Context.NotFoundException' when the calling
+-- thread has no registered context.
 --
--- @since 0.2.0.0
+-- @since 0.1.1.0
 view :: View ctx -> IO ctx
 view = maybe throwContextNotFound pure <=< viewMay
 
 -- | Provide the calling thread a view of its current context from the specified
--- 'View', if present.
+-- 'Context.View.View', if present.
 --
--- @since 0.2.0.0
+-- @since 0.1.1.0
 viewMay :: View ctx -> IO (Maybe ctx)
 viewMay = \case
   MkView f store -> fmap (fmap f) $ mineMay store
 
--- | Create a 'View' from the provided 'Store'.
+-- | Create a 'Context.View.View' from the provided 'Context.Store'.
 --
--- @since 0.2.0.0
+-- @since 0.1.1.0
 toView :: Store ctx -> View ctx
 toView = MkView id
 
