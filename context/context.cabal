@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: f039a0aad49f186ced980c33e32c16906b02598865a644fb1142fda2f631183d
+-- hash: 6dd2ef561e55837d78aa9bd8a9607aa49a0f003f6ca09e8352d1404c32ba8a7e
 
 name:           context
 version:        0.1.0.0
@@ -38,6 +38,7 @@ library
       Context.Implicit
       Context.Internal
       Context.Storage
+      Context.View
   other-modules:
       Paths_context
   hs-source-dirs:

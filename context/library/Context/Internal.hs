@@ -1,4 +1,7 @@
 {-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE GADTs #-}
@@ -14,6 +17,7 @@ module Context.Internal
     -- ** Store-related
     Store(Store, ref, key)
   , State(State, stacks, def)
+  , NotFoundException(NotFoundException, threadId)
   , withStore
   , newStore
   , use
@@ -22,6 +26,13 @@ module Context.Internal
   , mineMay
   , mineMayOnDefault
   , setDefault
+  , throwContextNotFound
+
+    -- ** View-related
+  , View(MkView)
+  , view
+  , viewMay
+  , toView
 
     -- ** Propagation-related
   , PropagationStrategy(NoPropagation, LatestPropagation)
@@ -39,9 +50,12 @@ module Context.Internal
   ) where
 
 import Control.Concurrent (ThreadId)
+import Control.Exception (Exception)
+import Control.Monad ((<=<))
 import Data.IORef (IORef)
 import Data.Map.Strict (Map)
 import Data.Unique (Unique)
+import GHC.Generics (Generic)
 import GHC.Stack (HasCallStack)
 import Prelude
 import System.IO.Unsafe (unsafePerformIO)
@@ -64,6 +78,15 @@ data State ctx = State
   { stacks :: Map ThreadId [ctx]
   , def :: Maybe ctx
   }
+
+-- | An exception which may be thrown when the calling thread does not have a
+-- registered context.
+--
+-- @since 0.1.0.0
+data NotFoundException = NotFoundException
+  { threadId :: ThreadId
+  } deriving stock (Eq, Generic, Show)
+    deriving anyclass Exception
 
 -- | The 'PropagationStrategy' controls the behavior used by
 -- "Context.Concurrent" when propagating context from a "parent" thread to a new
@@ -99,6 +122,11 @@ setDefault :: Store ctx -> ctx -> IO ()
 setDefault Store { ref } context = do
   IORef.atomicModifyIORef' ref \state ->
     (state { def = Just context }, ())
+
+throwContextNotFound :: IO a
+throwContextNotFound = do
+  threadId <- Concurrent.myThreadId
+  Exception.throwIO $ NotFoundException { threadId }
 
 -- | Provide the calling thread its current context from the specified
 -- 'Store', if present.
@@ -216,6 +244,39 @@ pop Store { ref } = do
         (state { stacks = Map.delete threadId stacks }, ())
       Just (_context : rest) ->
         (state { stacks = Map.insert threadId rest stacks }, ())
+
+-- | A 'View' provides a read-only view into a 'Store'. 'View' trades the
+-- 'Store' ability to register new context for the ability to arbitrarily
+-- transform context values locally to the 'View'.
+--
+-- @since 0.2.0.0
+data View ctx where
+  MkView :: (ctx' -> ctx) -> Store ctx' -> View ctx
+
+instance Functor View where
+  fmap g (MkView f store) = MkView (g . f) store
+
+-- | Provide the calling thread a view of its current context from the specified
+-- 'View'. Throws a 'Context.NotFoundException' when the calling thread has no
+-- registered context.
+--
+-- @since 0.2.0.0
+view :: View ctx -> IO ctx
+view = maybe throwContextNotFound pure <=< viewMay
+
+-- | Provide the calling thread a view of its current context from the specified
+-- 'View', if present.
+--
+-- @since 0.2.0.0
+viewMay :: View ctx -> IO (Maybe ctx)
+viewMay = \case
+  MkView f store -> fmap (fmap f) $ mineMay store
+
+-- | Create a 'View' from the provided 'Store'.
+--
+-- @since 0.2.0.0
+toView :: Store ctx -> View ctx
+toView = MkView id
 
 data AnyStore where
   MkAnyStore :: forall ctx. Store ctx -> AnyStore

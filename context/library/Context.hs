@@ -1,9 +1,4 @@
-{-# LANGUAGE DeriveAnyClass #-}
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE StrictData #-}
 
 module Context
   ( -- * Introduction
@@ -26,6 +21,9 @@ module Context
   , mineMay
   , minesMay
 
+    -- * Views
+  , module Context.View
+
     -- * Exceptions
   , NotFoundException(NotFoundException, threadId)
 
@@ -37,23 +35,12 @@ module Context
   ) where
 
 import Context.Concurrent
-import Context.Internal (Store, mineMay, use)
+import Context.Internal (NotFoundException(NotFoundException, threadId), Store, mineMay, use)
 import Context.Storage
-import Control.Exception (Exception)
+import Context.View
 import Control.Monad ((<=<))
-import GHC.Generics (Generic)
 import Prelude
 import qualified Context.Internal as Internal
-import qualified Control.Exception as Exception
-
--- | An exception which may be thrown via 'mine', 'mines', and 'adjust' when the
--- calling thread does not have a registered context.
---
--- @since 0.1.0.0
-data NotFoundException = NotFoundException
-  { threadId :: ThreadId
-  } deriving stock (Eq, Generic, Show)
-    deriving anyclass Exception
 
 -- | Provides a new, non-empty 'Store' that uses the specified context value as a
 -- default when the calling thread has no registered context. 'mine', 'mines',
@@ -88,7 +75,7 @@ adjust store f action = do
 --
 -- @since 0.1.0.0
 mine :: Store ctx -> IO ctx
-mine = maybe throwContextNotFound pure <=< mineMay
+mine = maybe Internal.throwContextNotFound pure <=< mineMay
 
 -- | Provide the calling thread a selection from its current context in the
 -- specified 'Store'. Throws a 'NotFoundException' when the calling
@@ -96,7 +83,7 @@ mine = maybe throwContextNotFound pure <=< mineMay
 --
 -- @since 0.1.0.0
 mines :: Store ctx -> (ctx -> a) -> IO a
-mines store = maybe throwContextNotFound pure <=< minesMay store
+mines store = maybe Internal.throwContextNotFound pure <=< minesMay store
 
 -- | Provide the calling thread a selection from its current context in the
 -- specified 'Store', if present.
@@ -104,11 +91,6 @@ mines store = maybe throwContextNotFound pure <=< minesMay store
 -- @since 0.1.0.0
 minesMay :: Store ctx -> (ctx -> a) -> IO (Maybe a)
 minesMay store selector = fmap (fmap selector) $ mineMay store
-
-throwContextNotFound :: IO a
-throwContextNotFound = do
-  threadId <- myThreadId
-  Exception.throwIO $ NotFoundException { threadId }
 
 -- $intro
 --

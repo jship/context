@@ -19,6 +19,10 @@ data Thing = Thing
   { stuff :: Int
   } deriving stock (Eq, Show)
 
+data OtherThing = OtherThing
+  { otherStuff :: Int
+  } deriving stock (Eq, Show)
+
 spec :: Spec
 spec = do
   describe "withEmptyStore" do
@@ -471,9 +475,105 @@ spec = do
           Context.setDefault store Thing { stuff = 2 }
           Context.mineMay store `shouldReturn` Just Thing { stuff = 2 }
 
+    describe "viewMay" do
+      it "empty" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          Context.viewMay storeView `shouldReturn` Nothing
+      it "single context" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          Context.use store Thing { stuff = 1 } do
+            Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 1 }
+          Context.viewMay storeView `shouldReturn` Nothing
+      it "nested contexts" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          Context.use store Thing { stuff = 1 } do
+            Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 1 }
+            Context.use store Thing { stuff = 2 } do
+              Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 2 }
+              Context.use store Thing { stuff = 3 } do
+                Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 3 }
+              Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 2 }
+            Context.use store Thing { stuff = 4 } do
+              Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 4 }
+            Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 1 }
+          Context.viewMay storeView `shouldReturn` Nothing
+      it "concurrent nested contexts" do
+        let mkContext i = Thing { stuff = i }
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          Async.forConcurrently_ [1 :: Int ..10] $ const do
+            Context.viewMay storeView `shouldReturn` Nothing
+            Context.use store (mkContext 1) do
+              Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 1)
+              Context.use store (mkContext 2) do
+                Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 2)
+                Context.use store (mkContext 3) do
+                  Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 3)
+                Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 2)
+              Context.use store (mkContext 4) do
+                Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 4)
+              Context.viewMay storeView `shouldReturn` Just (toOtherThing $ mkContext 1)
+            Context.viewMay storeView `shouldReturn` Nothing
+          Context.viewMay storeView `shouldReturn` Nothing
+
+    describe "view" do
+      it "empty" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          threadId <- Concurrent.myThreadId
+          Context.view storeView `shouldThrow` notFound threadId
+      it "single context" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          threadId <- Concurrent.myThreadId
+          Context.use store Thing { stuff = 1 } do
+            Context.view storeView `shouldReturn` OtherThing { otherStuff = 1 }
+          Context.view storeView `shouldThrow` notFound threadId
+      it "nested contexts" do
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          threadId <- Concurrent.myThreadId
+          Context.use store Thing { stuff = 1 } do
+            Context.view storeView `shouldReturn` OtherThing { otherStuff = 1 }
+            Context.use store Thing { stuff = 2 } do
+              Context.view storeView `shouldReturn` OtherThing { otherStuff = 2 }
+              Context.use store Thing { stuff = 3 } do
+                Context.view storeView `shouldReturn` OtherThing { otherStuff = 3 }
+              Context.view storeView `shouldReturn` OtherThing { otherStuff = 2 }
+            Context.use store Thing { stuff = 4 } do
+              Context.view storeView `shouldReturn` OtherThing { otherStuff = 4 }
+            Context.view storeView `shouldReturn` OtherThing { otherStuff = 1 }
+          Context.view storeView `shouldThrow` notFound threadId
+      it "concurrent nested contexts" do
+        let mkContext i = Thing { stuff = i }
+        initThreadId <- Concurrent.myThreadId
+        Context.withEmptyStore @Thing \store -> do
+          let storeView = fmap toOtherThing $ Context.toView store
+          Async.forConcurrently_ [1 :: Int ..10] $ const do
+            threadId <- Concurrent.myThreadId
+            Context.view storeView `shouldThrow` notFound threadId
+            Context.use store (mkContext 1) do
+              Context.view storeView `shouldReturn` (toOtherThing $ mkContext 1)
+              Context.use store (mkContext 2) do
+                Context.view storeView `shouldReturn` (toOtherThing $ mkContext 2)
+                Context.use store (mkContext 3) do
+                  Context.view storeView `shouldReturn` (toOtherThing $ mkContext 3)
+                Context.view storeView `shouldReturn` (toOtherThing $ mkContext 2)
+              Context.use store (mkContext 4) do
+                Context.view storeView `shouldReturn` (toOtherThing $ mkContext 4)
+              Context.view storeView `shouldReturn` (toOtherThing $ mkContext 1)
+            Context.view storeView `shouldThrow` notFound threadId
+          Context.view storeView `shouldThrow` notFound initThreadId
+
 notFound :: ThreadId -> Context.NotFoundException -> Bool
 notFound threadId notFoundEx =
   Context.NotFoundException { Context.threadId } == notFoundEx
 
 modifier :: Thing -> Thing
 modifier thing = thing { stuff = 2 * stuff thing }
+
+toOtherThing :: Thing -> OtherThing
+toOtherThing Thing { stuff } = OtherThing { otherStuff = stuff }
