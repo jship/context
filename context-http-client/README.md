@@ -2,8 +2,6 @@
 
 [![Version badge][]][version]
 
-🚧 This README is under construction and could use some love. 🚧
-
 `context-http-client` supports modifying `http-client` requests/responses using
 `context`.
 

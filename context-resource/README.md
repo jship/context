@@ -2,8 +2,6 @@
 
 [![Version badge][]][version]
 
-🚧 This README is under construction and could use some love. 🚧
-
 `context-resource` contains a thread-safe, pool-compatible resource provider
 abstraction that supports resource-sharing within nested actions.
 

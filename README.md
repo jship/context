@@ -2,8 +2,6 @@
 
 [![Build badge][]][build]
 
-🚧 This README is under construction and could use some love. 🚧
-
 This repo houses the core `context` library and libraries built on top
 of `context`. The `context` package provides thread-indexed storage
 around arbitrary context values. The interface supports nesting context

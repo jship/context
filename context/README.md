@@ -2,8 +2,6 @@
 
 [![Version badge][]][version]
 
-🚧 This README is under construction and could use some love. 🚧
-
 `context` provides thread-indexed storage around arbitrary context
 values. The interface supports nesting context values per thread, and at
 any point, the calling thread may ask for their current context.

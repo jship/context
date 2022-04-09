@@ -2,8 +2,6 @@
 
 [![Version badge][]][version]
 
-🚧 This README is under construction and could use some love. 🚧
-
 `context-wai-middleware` supports adding request-specific (or not!) context to
 your WAI applications.
 
