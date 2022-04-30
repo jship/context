@@ -1,4 +1,4 @@
-resolver: lts-16.3
+resolver: nightly-2022-04-28
 packages:
 - ./context
 - ./context-http-client
