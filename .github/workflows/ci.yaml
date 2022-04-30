@@ -27,7 +27,7 @@ jobs:
       with:
         path: ${{ steps.haskell-actions-setup.outputs.stack-root }}
         key: ${{ runner.os }}-${{ matrix.resolver }}
-        restore-keys: ${{ runner.os }}-
+        #restore-keys: ${{ runner.os }}-
     - name: Install GHC
       run: stack --resolver="$RESOLVER" --no-terminal setup
     - name: Build Dependencies
