@@ -8,10 +8,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        #os: [ubuntu-latest, macOS-latest, windows-latest]
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macOS-latest, windows-latest]
         resolver:
-        - lts-16.3 # ghc-8.8
+        - nightly-2022-04-28  # ghc-9.2.2
+        - lts-19.5  # ghc-9.0.2
+        - lts-18.28  # ghc-8.10.7
     env:
       RESOLVER: ${{ matrix.resolver }}
 
@@ -23,7 +24,7 @@ jobs:
         enable-stack: true
         stack-version: latest
     - name: Cache
-      uses: actions/cache@v3.0.1
+      uses: actions/cache@v3
       with:
         path: ${{ steps.haskell-actions-setup.outputs.stack-root }}
         key: ${{ runner.os }}-${{ matrix.resolver }}
