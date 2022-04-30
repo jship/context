@@ -11,5 +11,5 @@ their current context.
 See the Haddocks of each package for more info on the libraries.
 
 [context]: https://github.com/jship/context
-[Build badge]: https://github.com/jship/context/workflows/ci/badge.svg
+[Build badge]: https://github.com/jship/context/workflows/CI/badge.svg
 [build]: https://github.com/jship/context/actions
