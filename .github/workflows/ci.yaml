@@ -12,6 +12,8 @@ jobs:
         os: [ubuntu-latest]
         resolver:
         - lts-16.3 # ghc-8.8
+    env:
+      RESOLVER: ${{ matrix.resolver }}
 
     steps:
     - uses: actions/checkout@v3
@@ -20,14 +22,8 @@ jobs:
         enable-stack: true
         stack-version: 'latest'
     - name: Setup
-      env:
-        RESOLVER: ${{ matrix.resolver }}
       run: stack --resolver="$RESOLVER" --no-terminal setup
     - name: Build
-      env:
-        RESOLVER: ${{ matrix.resolver }}
       run: stack --resolver="$RESOLVER" --no-terminal build --pedantic --test --no-run-tests --bench --no-run-benchmarks
     - name: Test
-      env:
-        RESOLVER: ${{ matrix.resolver }}
       run: stack --resolver="$RESOLVER" --no-terminal build --pedantic --test
