@@ -1,10 +1,8 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
---
--- hash: 1865990c2877a02d8dacd93e6c25398bbb43844bf4cd02afdda60b6540ca6c4f
 
 name:           context-http-client
 version:        0.1.0.0
