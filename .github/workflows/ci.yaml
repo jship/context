@@ -23,7 +23,9 @@ jobs:
         stack-version: 'latest'
     - name: Setup
       run: stack --resolver="$RESOLVER" --no-terminal setup
+    - name: Dependencies
+      run: stack --resolver="$RESOLVER" --no-terminal build --only-dependencies
     - name: Build
-      run: stack --resolver="$RESOLVER" --no-terminal build --pedantic --test --no-run-tests --bench --no-run-benchmarks
+      run: stack --resolver="$RESOLVER" --no-terminal build --pedantic --test --no-run-tests --bench --no-run-benchmarks --haddock --no-haddock-deps
     - name: Test
       run: stack --resolver="$RESOLVER" --no-terminal build --pedantic --test
