@@ -20,17 +20,19 @@ module Context.Resource
   , withSharedResource
   ) where
 
+import Control.Monad.Catch (MonadMask, MonadThrow)
+import Control.Monad.IO.Class (MonadIO)
 import Prelude
 import qualified Context
 
 -- | An opaque resource provider.
 --
 -- @since 0.1.0.0
-newtype Provider res = Provider
-  { store :: Context.Store (WithRes res)
+newtype Provider m res = Provider
+  { store :: Context.Store (WithRes m res)
   }
 
-newtype WithRes res = WithRes (forall r. (res -> IO r) -> IO r)
+newtype WithRes m res = WithRes (forall r. (res -> m r) -> m r)
 
 -- | Given a @with@-style function to acquire a resource, supplies the caller
 -- with a resource 'Provider'. This 'Provider' should ideally be long-lived and
@@ -39,9 +41,11 @@ newtype WithRes res = WithRes (forall r. (res -> IO r) -> IO r)
 --
 -- @since 0.1.0.0
 withProvider
-  :: (forall r. (res -> IO r) -> IO r)
-  -> (Provider res -> IO a)
-  -> IO a
+  :: forall m res a
+   . (MonadIO m, MonadMask m)
+  => (forall r. (res -> m r) -> m r)
+  -> (Provider m res -> m a)
+  -> m a
 withProvider withRes f = do
   Context.withStore Context.noPropagation (Just (WithRes withRes)) \store -> do
     f Provider { store }
@@ -50,7 +54,12 @@ withProvider withRes f = do
 -- specified action.
 --
 -- @since 0.1.0.0
-withResource :: Provider res -> (res -> IO a) -> IO a
+withResource
+  :: forall m res a
+   . (MonadIO m, MonadThrow m)
+  => Provider m res
+  -> (res -> m a)
+  -> m a
 withResource Provider { store } f = do
   WithRes withRes <- Context.mine store
   withRes f
@@ -60,7 +69,13 @@ withResource Provider { store } f = do
 -- 'withSharedResource') within the action will return the shared resource.
 --
 -- @since 0.1.0.0
-shareResource :: Provider res -> res -> IO a -> IO a
+shareResource
+  :: forall m res a
+   . (MonadIO m, MonadMask m)
+  => Provider m res
+  -> res
+  -> m a
+  -> m a
 shareResource Provider { store } resource action = do
   Context.use store (WithRes ($ resource)) action
 
@@ -71,7 +86,12 @@ shareResource Provider { store } resource action = do
 -- This is a convenience function combining 'withResource' and 'shareResource'.
 --
 -- @since 0.1.0.0
-withSharedResource :: Provider res -> (res -> IO a) -> IO a
+withSharedResource
+  :: forall m res a
+   . (MonadIO m, MonadMask m)
+  => Provider m res
+  -> (res -> m a)
+  -> m a
 withSharedResource provider f = do
   withResource provider \resource -> do
     shareResource provider resource do
