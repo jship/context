@@ -8,6 +8,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData #-}
 
 module Context.Internal
@@ -52,6 +53,8 @@ module Context.Internal
 import Control.Concurrent (ThreadId)
 import Control.Exception (Exception)
 import Control.Monad ((<=<))
+import Control.Monad.Catch (MonadMask, MonadThrow)
+import Control.Monad.IO.Class (MonadIO(liftIO))
 import Data.IORef (IORef)
 import Data.Map.Strict (Map)
 import Data.Unique (Unique)
@@ -60,7 +63,7 @@ import GHC.Stack (HasCallStack)
 import Prelude
 import System.IO.Unsafe (unsafePerformIO)
 import qualified Control.Concurrent as Concurrent
-import qualified Control.Exception as Exception
+import qualified Control.Monad.Catch as Catch
 import qualified Data.IORef as IORef
 import qualified Data.Map.Strict as Map
 import qualified Data.Traversable as Traversable
@@ -118,27 +121,44 @@ data PropagationStrategy
 -- >     -- ...
 --
 -- @since 0.1.0.0
-setDefault :: Store ctx -> ctx -> IO ()
+setDefault
+  :: forall m ctx
+   . (MonadIO m)
+  => Store ctx
+  -> ctx
+  -> m ()
 setDefault Store { ref } context = do
-  IORef.atomicModifyIORef' ref \state ->
+  liftIO $ IORef.atomicModifyIORef' ref \state ->
     (state { def = Just context }, ())
 
-throwContextNotFound :: IO a
+throwContextNotFound
+  :: forall m a
+   . (MonadIO m, MonadThrow m)
+  => m a
 throwContextNotFound = do
-  threadId <- Concurrent.myThreadId
-  Exception.throwIO $ NotFoundException { threadId }
+  threadId <- liftIO $ Concurrent.myThreadId
+  Catch.throwM $ NotFoundException { threadId }
 
 -- | Provide the calling thread its current context from the specified
 -- 'Store', if present.
 --
 -- @since 0.1.0.0
-mineMay :: Store ctx -> IO (Maybe ctx)
+mineMay
+  :: forall m ctx
+   . (MonadIO m)
+  => Store ctx
+  -> m (Maybe ctx)
 mineMay = mineMayOnDefault id
 
-mineMayOnDefault :: (Maybe ctx -> Maybe ctx) -> Store ctx -> IO (Maybe ctx)
+mineMayOnDefault
+  :: forall m ctx
+   . (MonadIO m)
+  => (Maybe ctx -> Maybe ctx)
+  -> Store ctx
+  -> m (Maybe ctx)
 mineMayOnDefault onDefault Store { ref } = do
-  threadId <- Concurrent.myThreadId
-  State { stacks, def } <- IORef.readIORef ref
+  threadId <- liftIO $ Concurrent.myThreadId
+  State { stacks, def } <- liftIO $ IORef.readIORef ref
   pure
     case Map.lookup threadId stacks of
       Nothing -> onDefault def
@@ -149,8 +169,15 @@ mineMayOnDefault onDefault Store { ref } = do
 -- thread, for the duration of the specified action.
 --
 -- @since 0.1.0.0
-use :: Store ctx -> ctx -> IO a -> IO a
-use store context = Exception.bracket_ (push store context) (pop store)
+use
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => Store ctx
+  -> ctx
+  -> m a
+  -> m a
+use store context =
+  Catch.bracket_ (liftIO $ push store context) (liftIO $ pop store)
 
 -- | Provides a new 'Store'. This is a lower-level function and is provided
 -- mainly to give library authors more fine-grained control when using a 'Store'
@@ -161,7 +188,9 @@ use store context = Exception.bracket_ (push store context) (pop store)
 --
 -- @since 0.1.0.0
 withStore
-  :: PropagationStrategy
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => PropagationStrategy
   -- ^ The strategy used by "Context.Concurrent" for propagating context from a
   -- "parent" thread to a new thread.
   -> Maybe ctx
@@ -175,14 +204,14 @@ withStore
   -- 'Context.mines', and 'Context.adjust' will throw 'Context.NotFoundException' when the calling
   -- thread has no registered context. Providing 'Nothing' is useful when the
   -- 'Store' will contain context values that are always thread-specific.
-  -> (Store ctx -> IO a)
-  -> IO a
+  -> (Store ctx -> m a)
+  -> m a
 withStore propagationStrategy mContext f = do
   store <- newStore propagationStrategy mContext
-  Exception.finally (f store) do
+  Catch.finally (f store) do
     case propagationStrategy of
       NoPropagation -> pure ()
-      LatestPropagation -> unregister registry store
+      LatestPropagation -> liftIO $ unregister registry store
 
 -- | Creates a new 'Store'. This is a lower-level function and is provided
 -- /only/ to support the use case of creating a 'Store' as a global:
@@ -198,7 +227,9 @@ withStore propagationStrategy mContext f = do
 --
 -- @since 0.1.0.0
 newStore
-  :: PropagationStrategy
+  :: forall m ctx
+   . (MonadIO m)
+  => PropagationStrategy
   -- ^ The strategy used by "Context.Concurrent" for propagating context from a
   -- "parent" thread to a new thread.
   -> Maybe ctx
@@ -212,14 +243,14 @@ newStore
   -- 'Context.mines', and 'Context.adjust' will throw 'Context.NotFoundException' when the calling
   -- thread has no registered context. Providing 'Nothing' is useful when the
   -- 'Store' will contain context values that are always thread-specific.
-  -> IO (Store ctx)
+  -> m (Store ctx)
 newStore propagationStrategy def = do
-  key <- Unique.newUnique
-  ref <- IORef.newIORef State { stacks = Map.empty, def }
+  key <- liftIO $ Unique.newUnique
+  ref <- liftIO $ IORef.newIORef State { stacks = Map.empty, def }
   let store = Store { ref, key }
   case propagationStrategy of
     NoPropagation -> pure ()
-    LatestPropagation -> register registry store
+    LatestPropagation -> liftIO $ register registry store
   pure store
 
 push :: Store ctx -> ctx -> IO ()
@@ -262,14 +293,14 @@ instance Functor View where
 -- thread has no registered context.
 --
 -- @since 0.1.1.0
-view :: View ctx -> IO ctx
+view :: (MonadIO m, MonadThrow m) => View ctx -> m ctx
 view = maybe throwContextNotFound pure <=< viewMay
 
 -- | Provide the calling thread a view of its current context from the specified
 -- 'Context.View.View', if present.
 --
 -- @since 0.1.1.0
-viewMay :: View ctx -> IO (Maybe ctx)
+viewMay :: (MonadIO m) => View ctx -> m (Maybe ctx)
 viewMay = \case
   MkView f store -> fmap (fmap f) $ mineMay store
 

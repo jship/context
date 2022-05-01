@@ -1,4 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Context
   ( -- * Introduction
@@ -13,6 +14,7 @@ module Context
     -- ** Registering context
   , use
   , adjust
+  , withAdjusted
 
     -- ** Asking for context
   , mine
@@ -39,6 +41,8 @@ import Context.Internal (NotFoundException(NotFoundException, threadId), Store, 
 import Context.Storage
 import Context.View
 import Control.Monad ((<=<))
+import Control.Monad.Catch (MonadMask, MonadThrow)
+import Control.Monad.IO.Class (MonadIO)
 import Prelude
 import qualified Context.Internal as Internal
 
@@ -48,7 +52,12 @@ import qualified Context.Internal as Internal
 -- to a non-empty 'Store'.
 --
 -- @since 0.1.0.0
-withNonEmptyStore :: ctx -> (Store ctx -> IO a) -> IO a
+withNonEmptyStore
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => ctx
+  -> (Store ctx -> m a)
+  -> m a
 withNonEmptyStore = Internal.withStore defaultPropagation . Just
 
 -- | Provides a new, empty 'Store'. 'mine', 'mines', and 'adjust' will throw
@@ -56,7 +65,11 @@ withNonEmptyStore = Internal.withStore defaultPropagation . Just
 -- when the 'Store' will contain context values that are always thread-specific.
 --
 -- @since 0.1.0.0
-withEmptyStore :: (Store ctx -> IO a) -> IO a
+withEmptyStore
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => (Store ctx -> m a)
+  -> m a
 withEmptyStore = Internal.withStore defaultPropagation Nothing
 
 -- | Adjust the calling thread's context in the specified 'Store' for the
@@ -64,17 +77,50 @@ withEmptyStore = Internal.withStore defaultPropagation Nothing
 -- calling thread has no registered context.
 --
 -- @since 0.1.0.0
-adjust :: Store ctx -> (ctx -> ctx) -> IO a -> IO a
-adjust store f action = do
+adjust
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => Store ctx
+  -> (ctx -> ctx)
+  -> m a
+  -> m a
+adjust store f action = withAdjusted store f $ const action
+
+-- | Convenience function to 'adjust' the context then supply the adjusted
+-- context to the inner action. This function is equivalent to calling 'adjust'
+-- and then immediately calling 'mine' in the inner action of 'adjust', e.g.:
+--
+-- > doStuff :: Store Thing -> (Thing -> Thing) -> IO ()
+-- > doStuff store f = do
+-- >   adjust store f do
+-- >     adjustedThing <- mine store
+-- >     ...
+--
+-- Throws a 'NotFoundException' when the calling thread has no registered
+-- context.
+--
+-- @since 0.2.0.0
+withAdjusted
+  :: forall m ctx a
+   . (MonadIO m, MonadMask m)
+  => Store ctx
+  -> (ctx -> ctx)
+  -> (ctx -> m a)
+  -> m a
+withAdjusted store f action = do
   adjustedContext <- mines store f
-  use store adjustedContext action
+  use store adjustedContext $ action adjustedContext
 
 -- | Provide the calling thread its current context from the specified
 -- 'Store'. Throws a 'NotFoundException' when the calling thread has no
 -- registered context.
 --
 -- @since 0.1.0.0
-mine :: Store ctx -> IO ctx
+mine
+  :: forall m ctx
+   . (MonadIO m, MonadThrow m)
+  => Store ctx
+  -> m ctx
 mine = maybe Internal.throwContextNotFound pure <=< mineMay
 
 -- | Provide the calling thread a selection from its current context in the
@@ -82,14 +128,24 @@ mine = maybe Internal.throwContextNotFound pure <=< mineMay
 -- thread has no registered context.
 --
 -- @since 0.1.0.0
-mines :: Store ctx -> (ctx -> a) -> IO a
+mines
+  :: forall m ctx a
+   . (MonadIO m, MonadThrow m)
+  => Store ctx
+  -> (ctx -> a)
+  -> m a
 mines store = maybe Internal.throwContextNotFound pure <=< minesMay store
 
 -- | Provide the calling thread a selection from its current context in the
 -- specified 'Store', if present.
 --
 -- @since 0.1.0.0
-minesMay :: Store ctx -> (ctx -> a) -> IO (Maybe a)
+minesMay
+  :: forall m ctx a
+   . (MonadIO m)
+  => Store ctx
+  -> (ctx -> a)
+  -> m (Maybe a)
 minesMay store selector = fmap (fmap selector) $ mineMay store
 
 -- $intro

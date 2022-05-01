@@ -1,5 +1,12 @@
 # Change log
 
+## 0.2.0.0
+
+* Lift signatures from `IO` to `MonadIO`, `MonadThrow` and `MonadMask`
+* Type parameter order is now explicit via `ScopedTypeVariables`
+* Add 'withAdjusted' convenience function
+* Re-export `Context.View` module from `Context.Implicit`
+
 ## 0.1.1.1
 
 * Correct Haddocks

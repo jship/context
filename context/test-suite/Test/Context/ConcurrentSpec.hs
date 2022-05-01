@@ -23,8 +23,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkIO do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -68,8 +68,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             let checkStores = do
                   Context.mineMay store1 `shouldReturn` Nothing
                   Context.mineMay store2 `shouldReturn` Nothing
@@ -121,8 +121,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkIOWithUnmask \_restore -> do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -166,8 +166,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkOn 1 do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -211,8 +211,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkOnWithUnmask 1 \_restore -> do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -256,8 +256,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkOS do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -301,8 +301,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Monad.void $ Context.forkOSWithUnmask \_restore -> do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -346,8 +346,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Context.runInBoundThread do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing
@@ -391,8 +391,8 @@ spec = do
     describe "mineMay" do
       it "empty stores" do
         threadDone <- Context.newEmptyMVar
-        Context.withEmptyStore @Thing \store1 -> do
-          Context.withEmptyStore @Char \store2 -> do
+        Context.withEmptyStore @IO @Thing \store1 -> do
+          Context.withEmptyStore @IO @Char \store2 -> do
             Context.runInUnboundThread do
               Context.mineMay store1 `shouldReturn` Nothing
               Context.mineMay store2 `shouldReturn` Nothing

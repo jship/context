@@ -28,15 +28,15 @@ spec = do
   describe "withEmptyStore" do
     describe "mineMay" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.mineMay store `shouldReturn` Nothing
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.use store Thing { stuff = 1 } do
             Context.mineMay store `shouldReturn` Just Thing { stuff = 1 }
           Context.mineMay store `shouldReturn` Nothing
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.use store Thing { stuff = 1 } do
             Context.mineMay store `shouldReturn` Just Thing { stuff = 1 }
             Context.use store Thing { stuff = 2 } do
@@ -50,7 +50,7 @@ spec = do
           Context.mineMay store `shouldReturn` Nothing
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             Context.mineMay store `shouldReturn` Nothing
             Context.use store (mkContext 1) do
@@ -68,15 +68,15 @@ spec = do
 
     describe "minesMay" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.minesMay store stuff `shouldReturn` Nothing
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.use store Thing { stuff = 1 } do
             Context.minesMay store stuff `shouldReturn` Just 1
           Context.minesMay store stuff `shouldReturn` Nothing
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.use store Thing { stuff = 1 } do
             Context.minesMay store stuff `shouldReturn` Just 1
             Context.use store Thing { stuff = 2 } do
@@ -90,7 +90,7 @@ spec = do
           Context.minesMay store stuff `shouldReturn` Nothing
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             Context.minesMay store stuff `shouldReturn` Nothing
             Context.use store (mkContext 1) do
@@ -108,17 +108,17 @@ spec = do
 
     describe "mine" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.mine store `shouldThrow` notFound threadId
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.mine store `shouldReturn` Thing { stuff = 1 }
           Context.mine store `shouldThrow` notFound threadId
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.mine store `shouldReturn` Thing { stuff = 1 }
@@ -134,7 +134,7 @@ spec = do
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
         initThreadId <- Concurrent.myThreadId
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             threadId <- Concurrent.myThreadId
             Context.mine store `shouldThrow` notFound threadId
@@ -153,17 +153,17 @@ spec = do
 
     describe "mines" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.mines store stuff `shouldThrow` notFound threadId
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.mines store stuff `shouldReturn` 1
           Context.mines store stuff `shouldThrow` notFound threadId
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.mines store stuff `shouldReturn` 1
@@ -179,7 +179,7 @@ spec = do
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
         initThreadId <- Concurrent.myThreadId
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             threadId <- Concurrent.myThreadId
             Context.mine store `shouldThrow` notFound threadId
@@ -198,12 +198,12 @@ spec = do
 
     describe "adjust" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.adjust store modifier (error "does not get here")
             `shouldThrow` notFound threadId
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.mine store `shouldReturn` Thing { stuff = 1 }
@@ -212,7 +212,7 @@ spec = do
             Context.mine store `shouldReturn` Thing { stuff = 1 }
           Context.mine store `shouldThrow` notFound threadId
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.adjust store modifier do
@@ -230,7 +230,7 @@ spec = do
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
         initThreadId <- Concurrent.myThreadId
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             threadId <- Concurrent.myThreadId
             Context.mine store `shouldThrow` notFound threadId
@@ -251,7 +251,7 @@ spec = do
 
     describe "setDefault" do
       it "setting default converts store to non-empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           Context.mineMay store `shouldReturn` Nothing
           Context.setDefault store Thing { stuff = 1 }
           Context.mineMay store `shouldReturn` Just Thing { stuff = 1 }
@@ -477,17 +477,17 @@ spec = do
 
     describe "viewMay" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           Context.viewMay storeView `shouldReturn` Nothing
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           Context.use store Thing { stuff = 1 } do
             Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 1 }
           Context.viewMay storeView `shouldReturn` Nothing
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           Context.use store Thing { stuff = 1 } do
             Context.viewMay storeView `shouldReturn` Just OtherThing { otherStuff = 1 }
@@ -502,7 +502,7 @@ spec = do
           Context.viewMay storeView `shouldReturn` Nothing
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             Context.viewMay storeView `shouldReturn` Nothing
@@ -521,19 +521,19 @@ spec = do
 
     describe "view" do
       it "empty" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           threadId <- Concurrent.myThreadId
           Context.view storeView `shouldThrow` notFound threadId
       it "single context" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
             Context.view storeView `shouldReturn` OtherThing { otherStuff = 1 }
           Context.view storeView `shouldThrow` notFound threadId
       it "nested contexts" do
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           threadId <- Concurrent.myThreadId
           Context.use store Thing { stuff = 1 } do
@@ -550,7 +550,7 @@ spec = do
       it "concurrent nested contexts" do
         let mkContext i = Thing { stuff = i }
         initThreadId <- Concurrent.myThreadId
-        Context.withEmptyStore @Thing \store -> do
+        Context.withEmptyStore @IO @Thing \store -> do
           let storeView = fmap toOtherThing $ Context.toView store
           Async.forConcurrently_ [1 :: Int ..10] $ const do
             threadId <- Concurrent.myThreadId
