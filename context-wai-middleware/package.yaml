@@ -1,5 +1,5 @@
 name: context-wai-middleware
-version: '0.1.0.0'
+version: '0.2.0.0'
 github: "jship/context/context-wai-middleware"
 license: MIT
 license-file: LICENSE.md
@@ -26,7 +26,7 @@ ghc-options:
 library:
   dependencies:
   - base >=4.12 && <5
-  - context >=0.1.0.0 && <0.2
+  - context >=0.2.0.0 && <0.3
   - wai >=3.0.3.0 && <3.3
   source-dirs: library
 

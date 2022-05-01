@@ -1,5 +1,5 @@
 name: context-http-client
-version: '0.1.0.0'
+version: '0.2.0.0'
 github: "jship/context/context-http-client"
 license: MIT
 license-file: LICENSE.md
@@ -26,7 +26,7 @@ ghc-options:
 library:
   dependencies:
   - base >=4.12 && <5
-  - context >=0.1.0.0 && <0.2
+  - context >=0.2.0.0 && <0.3
   - http-client >=0.5.13.1 && <0.8
   source-dirs: library
 
