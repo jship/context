@@ -25,7 +25,7 @@ ghc-options:
 
 library:
   dependencies:
-  - base >=4.12 && <5
+  - base >=4.11.1.0 && <5
   - context >=0.2.0.0 && <0.3
   - wai >=3.0.3.0 && <3.3
   source-dirs: library

@@ -1,4 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoImplicitPrelude #-}
@@ -47,7 +46,7 @@ withProvider
   -> (Provider m res -> m a)
   -> m a
 withProvider withRes f = do
-  Context.withStore Context.noPropagation (Just (WithRes withRes)) \store -> do
+  Context.withStore Context.noPropagation (Just (WithRes withRes)) $ \store -> do
     f Provider { store }
 
 -- | Acquire a resource from the specified 'Provider', for the duration of the
@@ -93,8 +92,8 @@ withSharedResource
   -> (res -> m a)
   -> m a
 withSharedResource provider f = do
-  withResource provider \resource -> do
-    shareResource provider resource do
+  withResource provider $ \resource -> do
+    shareResource provider resource $ do
       f resource
 
 -- $intro

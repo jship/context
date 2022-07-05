@@ -1,4 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
@@ -32,7 +31,7 @@ addRequestContext
   -> Wai.Middleware
 addRequestContext contextStore mkContext app = \request sendResponse -> do
   context <- mkContext request
-  Context.use contextStore context do
+  Context.use contextStore context $ do
     app request sendResponse
 
 -- | Register request-specific context into the provided 'Context.Store', for
@@ -53,7 +52,7 @@ addRequestContextMay contextStore mkContext app = \request sendResponse -> do
   mkContext request >>= \case
     Nothing -> app request sendResponse
     Just context ->
-      Context.use contextStore context do
+      Context.use contextStore context $ do
         app request sendResponse
 
 -- | Register arbitrary context into the provided 'Context.Store', for
@@ -69,5 +68,5 @@ addRequestContextMay contextStore mkContext app = \request sendResponse -> do
 addContext :: Context.Store ctx -> IO ctx -> Wai.Middleware
 addContext contextStore mkContext app = \request sendResponse -> do
   context <- mkContext
-  Context.use contextStore context do
+  Context.use contextStore context $ do
     app request sendResponse

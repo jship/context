@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -29,14 +28,14 @@ import qualified Network.Wai.Handler.Warp as Warp
 
 spec :: Spec
 spec = do
-  describe "modifyRequestsWithContext" do
-    it "concurrent test" do
+  describe "modifyRequestsWithContext" $ do
+    it "concurrent test" $ do
       numberQueue <- TQueue.newTQueueIO @Int
       let app = \request sendResponse -> do
             let headers = Wai.requestHeaders request
             let [number] =
                   fmap (read . ByteString.Char8.unpack . snd)
-                    $ flip filter headers \(headerName, _) ->
+                    $ flip filter headers $ \(headerName, _) ->
                         "number" == CI.foldedCase headerName
 
             STM.atomically $ TQueue.writeTQueue numberQueue number
@@ -60,11 +59,11 @@ spec = do
                   { HTTP.Client.requestHeaders =
                       ("number", ByteString.Char8.pack $ show context)
                         : flip filter (HTTP.Client.requestHeaders request)
-                            \(headerName, _) ->
-                              "number" /= CI.foldedCase headerName
+                            (\(headerName, _) ->
+                              "number" /= CI.foldedCase headerName)
                   }
 
-      Context.withEmptyStore \contextStore -> do
+      Context.withEmptyStore $ \contextStore -> do
         manager <-
           HTTP.Client.newManager
             $ HTTP.Client.Context.modifyRequestsWithContext
@@ -73,18 +72,18 @@ spec = do
                 HTTP.Client.defaultManagerSettings
 
         -- Spin up a test server for the 'app' defined above.
-        Warp.testWithApplication (pure app) \port -> do
+        Warp.testWithApplication (pure app) $ \port -> do
           request <-
             HTTP.Client.parseRequest
               $ "http://localhost:" <> show port <> "/abc/def"
 
           -- Spin up 10 threads that each make 3 http requests into the test
           -- server.
-          Async.forConcurrently_ [0 :: Int .. 9] \i -> do
-            Foldable.for_ [1..3] \j -> do
+          Async.forConcurrently_ [0 :: Int .. 9] $ \i -> do
+            Foldable.for_ [1..3] $ \j -> do
               -- By using a context here, behind the scenes the manager will also
               -- have access to this context as it will send on this same thread.
-              Context.use contextStore (3 * i + j) do
+              Context.use contextStore (3 * i + j) $ do
                 response <- HTTP.Client.httpLbs request manager
                 HTTP.Types.statusCode (HTTP.Client.responseStatus response)
                   `shouldBe` 200
@@ -94,8 +93,8 @@ spec = do
         numbers <- STM.atomically $ TQueue.flushTQueue numberQueue
         List.sort numbers `shouldBe` [1..30]
 
-  describe "modifyResponsesWithContext" do
-    it "concurrent test" do
+  describe "modifyResponsesWithContext" $ do
+    it "concurrent test" $ do
       let app = \_request sendResponse -> do
             sendResponse
               $ Wai.responseLBS
@@ -121,7 +120,7 @@ spec = do
                         : HTTP.Client.responseHeaders response
                   }
 
-      Context.withEmptyStore \contextStore -> do
+      Context.withEmptyStore $ \contextStore -> do
         manager <-
           HTTP.Client.newManager
             $ HTTP.Client.Context.modifyResponsesWithContext
@@ -130,16 +129,16 @@ spec = do
                 HTTP.Client.defaultManagerSettings
 
         -- Spin up a test server for the 'app' defined above.
-        Warp.testWithApplication (pure app) \port -> do
+        Warp.testWithApplication (pure app) $ \port -> do
           request <-
             HTTP.Client.parseRequest
               $ "http://localhost:" <> show port <> "/abc/def"
 
           -- Spin up 10 threads that each make 3 http requests into the test
           -- server.
-          Async.forConcurrently_ [0 :: Int .. 9] \i -> do
-            Foldable.for_ [1..3] \j -> do
-              Context.use contextStore (3 * i + j) do
+          Async.forConcurrently_ [0 :: Int .. 9] $ \i -> do
+            Foldable.for_ [1..3] $ \j -> do
+              Context.use contextStore (3 * i + j) $ do
                 response <- HTTP.Client.httpLbs request manager
                 HTTP.Types.statusCode (HTTP.Client.responseStatus response)
                   `shouldBe` 200
@@ -149,7 +148,7 @@ spec = do
                 let headers = HTTP.Client.responseHeaders response
                 let [number] =
                       fmap (read . ByteString.Char8.unpack . snd)
-                        $ flip filter headers \(headerName, _) ->
+                        $ flip filter headers $ \(headerName, _) ->
                             "number" == CI.foldedCase headerName
 
                 number `shouldBe` 3 * i + j

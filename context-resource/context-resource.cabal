@@ -38,7 +38,7 @@ library
       library
   ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
-      base >=4.12 && <5
+      base >=4.11.1.0 && <5
     , context >=0.2.0.0 && <0.3
     , exceptions >=0.10.0 && <0.11
   default-language: Haskell2010
