@@ -1,4 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE RankNTypes #-}
 
@@ -60,7 +59,7 @@ import qualified Control.Exception as Exception
 -- @since 0.1.0.0
 forkIO :: IO () -> IO ThreadId
 forkIO action = do
-  Internal.withPropagator \propagate -> do
+  Internal.withPropagator $ \propagate -> do
     Concurrent.forkIO $ propagate action
 
 -- | See 'Concurrent.forkFinally'.
@@ -72,9 +71,9 @@ forkFinally action and_then = do
   -- Control.Concurrent function. This enables us to propagate context a single
   -- time to make it available to both the thread's main action and terminating
   -- action.
-  Internal.withPropagator \propagate -> do
-    Exception.mask \restore -> do
-      Concurrent.forkIO $ propagate do
+  Internal.withPropagator $ \propagate -> do
+    Exception.mask $ \restore -> do
+      Concurrent.forkIO $ propagate $ do
         Exception.try (restore action) >>= and_then
 
 -- | See 'Concurrent.forkIOWithUnmask'.
@@ -82,8 +81,8 @@ forkFinally action and_then = do
 -- @since 0.1.0.0
 forkIOWithUnmask :: ((forall a. IO a -> IO a) -> IO ()) -> IO ThreadId
 forkIOWithUnmask io = do
-  Internal.withPropagator \propagate -> do
-    Concurrent.forkIOWithUnmask \restore -> do
+  Internal.withPropagator $ \propagate -> do
+    Concurrent.forkIOWithUnmask $ \restore -> do
       propagate $ io restore
 
 -- | See 'Concurrent.forkOn'.
@@ -91,7 +90,7 @@ forkIOWithUnmask io = do
 -- @since 0.1.0.0
 forkOn :: Int -> IO () -> IO ThreadId
 forkOn cpu action = do
-  Internal.withPropagator \propagate -> do
+  Internal.withPropagator $ \propagate -> do
     Concurrent.forkOn cpu $ propagate action
 
 -- | See 'Concurrent.forkOnWithUnmask'.
@@ -99,8 +98,8 @@ forkOn cpu action = do
 -- @since 0.1.0.0
 forkOnWithUnmask :: Int -> ((forall a. IO a -> IO a) -> IO ()) -> IO ThreadId
 forkOnWithUnmask cpu io = do
-  Internal.withPropagator \propagate -> do
-    Concurrent.forkOnWithUnmask cpu \restore -> do
+  Internal.withPropagator $ \propagate -> do
+    Concurrent.forkOnWithUnmask cpu $ \restore -> do
       propagate $ io restore
 
 -- | See 'Concurrent.forkOS'.
@@ -108,7 +107,7 @@ forkOnWithUnmask cpu io = do
 -- @since 0.1.0.0
 forkOS :: IO () -> IO ThreadId
 forkOS action = do
-  Internal.withPropagator \propagate -> do
+  Internal.withPropagator $ \propagate -> do
     Concurrent.forkOS $ propagate action
 
 -- | See 'Concurrent.forkOSWithUnmask'.
@@ -116,8 +115,8 @@ forkOS action = do
 -- @since 0.1.0.0
 forkOSWithUnmask :: ((forall a. IO a -> IO a) -> IO ()) -> IO ThreadId
 forkOSWithUnmask io = do
-  Internal.withPropagator \propagate -> do
-    Concurrent.forkOSWithUnmask \restore -> do
+  Internal.withPropagator $ \propagate -> do
+    Concurrent.forkOSWithUnmask $ \restore -> do
       propagate $ io restore
 
 -- | See 'Concurrent.runInBoundThread'.
@@ -125,7 +124,7 @@ forkOSWithUnmask io = do
 -- @since 0.1.0.0
 runInBoundThread :: IO a -> IO a
 runInBoundThread action =
-  Internal.withPropagator \propagate -> do
+  Internal.withPropagator $ \propagate -> do
     Concurrent.runInBoundThread $ propagate action
 
 -- | See 'Concurrent.runInUnboundThread'.
@@ -133,7 +132,7 @@ runInBoundThread action =
 -- @since 0.1.0.0
 runInUnboundThread :: IO a -> IO a
 runInUnboundThread action =
-  Internal.withPropagator \propagate -> do
+  Internal.withPropagator $ \propagate -> do
     Concurrent.runInUnboundThread $ propagate action
 
 -- $intro

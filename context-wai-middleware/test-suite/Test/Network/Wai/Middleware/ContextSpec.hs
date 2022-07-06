@@ -1,6 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-uni-patterns #-}
 
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -32,8 +31,8 @@ import qualified Network.Wai.Middleware.Context as Middleware
 
 spec :: Spec
 spec = do
-  describe "addRequestContext" do
-    it "concurrent test" do
+  describe "addRequestContext" $ do
+    it "concurrent test" $ do
       -- This function creates a value of our context type - 'Int' - by
       -- plucking the "number" header off the request. The header must be
       -- present.
@@ -42,17 +41,17 @@ spec = do
             let headers = Wai.requestHeaders request
             let [number] =
                   fmap (read . ByteString.Char8.unpack . snd)
-                    $ flip filter headers \(headerName, _) ->
+                    $ flip filter headers $ \(headerName, _) ->
                       "number" == CI.foldedCase headerName
             pure number
 
-      Context.withEmptyStore \contextStore -> do
+      Context.withEmptyStore $ \contextStore -> do
         numberQueue <- TQueue.newTQueueIO
         runTest numberQueue contextStore
           $ Middleware.addRequestContext contextStore mkContext
 
-  describe "addRequestContextMay" do
-    it "concurrent test" do
+  describe "addRequestContextMay" $ do
+    it "concurrent test" $ do
       -- This function creates a value of our context type - 'Int' - by
       -- plucking the "number" header off the request, if present.
       let mkContext :: Request -> IO (Maybe Int)
@@ -61,27 +60,27 @@ spec = do
             let mNumber@Just {} =
                   Maybe.listToMaybe
                     $ fmap (read . ByteString.Char8.unpack . snd)
-                    $ flip filter headers \(headerName, _) ->
+                    $ flip filter headers $ \(headerName, _) ->
                         "number" == CI.foldedCase headerName
             pure mNumber
 
-      Context.withEmptyStore \contextStore -> do
+      Context.withEmptyStore $ \contextStore -> do
         numberQueue <- TQueue.newTQueueIO
         runTest numberQueue contextStore
           $ Middleware.addRequestContextMay contextStore mkContext
 
-  describe "addContext" do
-    it "concurrent test" do
+  describe "addContext" $ do
+    it "concurrent test" $ do
       counterRef <- IORef.newIORef 0
 
       -- This function creates a value of our context type - 'Int' - by
       -- using a sequential counter.
       let mkContext :: IO Int
           mkContext = do
-            IORef.atomicModifyIORef' counterRef \counter ->
+            IORef.atomicModifyIORef' counterRef $ \counter ->
               (1 + counter, 1 + counter)
 
-      Context.withEmptyStore \contextStore -> do
+      Context.withEmptyStore $ \contextStore -> do
         numberQueue <- TQueue.newTQueueIO
         runTest numberQueue contextStore
           $ Middleware.addContext contextStore mkContext
@@ -89,7 +88,7 @@ spec = do
 runTest :: TQueue Int -> Context.Store Int -> Middleware -> IO ()
 runTest numberQueue contextStore middleware = do
   let app =
-        middleware \_request sendResponse -> do
+        middleware $ \_request sendResponse -> do
           -- Ask for the request handler thread's context, then write it
           -- to the number queue, if present.
           Context.mineMay contextStore >>= \case
@@ -105,14 +104,14 @@ runTest numberQueue contextStore middleware = do
                 "Test.Network.Wai.Middleware.ContextSpec"
 
   -- Spin up a test server for the 'app' defined above.
-  Warp.testWithApplication (pure app) \port -> do
+  Warp.testWithApplication (pure app) $ \port -> do
     manager <- HTTP.Client.newManager HTTP.Client.defaultManagerSettings
     request <- HTTP.Client.parseRequest $ "http://localhost:" <> show port <> "/abc/def"
 
     -- Spin up 10 threads that each make 3 http requests into the test
     -- server.
-    Async.forConcurrently_ [0 :: Int .. 9] \i -> do
-      Foldable.for_ [1..3] \j -> do
+    Async.forConcurrently_ [0 :: Int .. 9] $ \i -> do
+      Foldable.for_ [1..3] $ \j -> do
         -- Every request gets a "number" header added to it.
         let newHeader = ("number", ByteString.Char8.pack $ show $ 3 * i + j)
         response <- flip HTTP.Client.httpLbs manager request

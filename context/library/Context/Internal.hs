@@ -1,4 +1,3 @@
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DerivingStrategies #-}
@@ -128,7 +127,7 @@ setDefault
   -> ctx
   -> m ()
 setDefault Store { ref } context = do
-  liftIO $ IORef.atomicModifyIORef' ref \state ->
+  liftIO $ IORef.atomicModifyIORef' ref $ \state ->
     (state { def = Just context }, ())
 
 throwContextNotFound
@@ -159,11 +158,10 @@ mineMayOnDefault
 mineMayOnDefault onDefault Store { ref } = do
   threadId <- liftIO $ Concurrent.myThreadId
   State { stacks, def } <- liftIO $ IORef.readIORef ref
-  pure
-    case Map.lookup threadId stacks of
-      Nothing -> onDefault def
-      Just [] -> bug "mineMayOnDefault"
-      Just (context : _rest) -> Just context
+  pure $ case Map.lookup threadId stacks of
+    Nothing -> onDefault def
+    Just [] -> bug "mineMayOnDefault"
+    Just (context : _rest) -> Just context
 
 -- | Register a context in the specified 'Store' on behalf of the calling
 -- thread, for the duration of the specified action.
@@ -208,7 +206,7 @@ withStore
   -> m a
 withStore propagationStrategy mContext f = do
   store <- newStore propagationStrategy mContext
-  Catch.finally (f store) do
+  Catch.finally (f store) $ do
     case propagationStrategy of
       NoPropagation -> pure ()
       LatestPropagation -> liftIO $ unregister registry store
@@ -256,7 +254,7 @@ newStore propagationStrategy def = do
 push :: Store ctx -> ctx -> IO ()
 push Store { ref } context = do
   threadId <- Concurrent.myThreadId
-  IORef.atomicModifyIORef' ref \state@State { stacks } ->
+  IORef.atomicModifyIORef' ref $ \state@State { stacks } ->
     case Map.lookup threadId stacks of
       Nothing ->
         (state { stacks = Map.insert threadId [context] stacks }, ())
@@ -266,7 +264,7 @@ push Store { ref } context = do
 pop :: Store ctx -> IO ()
 pop Store { ref } = do
   threadId <- Concurrent.myThreadId
-  IORef.atomicModifyIORef' ref \state@State { stacks } ->
+  IORef.atomicModifyIORef' ref $ \state@State { stacks } ->
     case Map.lookup threadId stacks of
       Nothing -> bug "pop-1"
       Just [] -> bug "pop-2"
@@ -341,8 +339,8 @@ withRegisteredPropagator :: Registry -> ((IO a -> IO a) -> IO b) -> IO b
 withRegisteredPropagator Registry { ref } f = do
   stores <- IORef.readIORef ref
   propagator <- do
-    fmap (foldr (.) id) do
-      Traversable.for stores \case
+    fmap (foldr (.) id) $ do
+      Traversable.for stores $ \case
         MkAnyStore store -> do
           -- N.B. When propagating context and the "parent" thread doesn't
           -- have any specific context in this particular store but there is
@@ -357,12 +355,12 @@ withRegisteredPropagator Registry { ref } f = do
 
 register :: Registry -> Store ctx -> IO ()
 register Registry { ref } store@Store { key } = do
-  IORef.atomicModifyIORef' ref \stores ->
+  IORef.atomicModifyIORef' ref $ \stores ->
     (Map.insert key (MkAnyStore store) stores, ())
 
 unregister :: Registry -> Store ctx -> IO ()
 unregister Registry { ref } Store { key } = do
-  IORef.atomicModifyIORef' ref \stores ->
+  IORef.atomicModifyIORef' ref $ \stores ->
     (Map.delete key stores, ())
 
 bug :: HasCallStack => String -> a
