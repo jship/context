@@ -1,5 +1,5 @@
 name: context-http-client
-version: '0.2.0.0'
+version: '0.2.0.1'
 github: "jship/context/context-http-client"
 license: MIT
 license-file: LICENSE.md

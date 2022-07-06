@@ -1,5 +1,9 @@
 # Change log
 
+## 0.2.0.1
+
+* Backwards compatibility with GHC 8.4 (@pbrisbin)
+
 ## 0.2.0.0
 
 * Lift signatures from `IO` to `MonadIO`, `MonadThrow` and `MonadMask`
