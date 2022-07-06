@@ -1,0 +1,6 @@
+resolver: nightly-2022-07-05
+packages:
+- ./context
+- ./context-http-client
+- ./context-resource
+- ./context-wai-middleware

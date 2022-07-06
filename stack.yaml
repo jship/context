@@ -1,6 +1,1 @@
-resolver: nightly-2022-04-28
-packages:
-- ./context
-- ./context-http-client
-- ./context-resource
-- ./context-wai-middleware
+./stack-nightly.yaml
