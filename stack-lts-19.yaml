@@ -1,4 +1,4 @@
-resolver: lts-19.14
+resolver: lts-19.33
 packages:
 - ./context
 - ./context-http-client
