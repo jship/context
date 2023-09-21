@@ -1,0 +1,6 @@
+resolver: lts-18.28
+packages:
+- ../context
+- ../context-http-client
+- ../context-resource
+- ../context-wai-middleware

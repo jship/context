@@ -13,7 +13,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         resolver:
-        - nightly # ghc-9.2.3
+        - nightly # ghc-9.6.2
+        - lts-21  # ghc-9.4.7
+        - lts-20  # ghc-9.2.8
         - lts-19  # ghc-9.0.2
         - lts-18  # ghc-8.10.7
         - lts-16  # ghc-8.8.4
@@ -22,11 +24,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - uses: freckle/stack-cache-action@v2
+    - id: stack
+      uses: freckle/stack-action@v4
       with:
-        prefix: v1/
-        stack-yaml: stack-${{ matrix.resolver }}.yaml
-    - uses: freckle/stack-action@v3
-      with:
-        stack-yaml: stack-${{ matrix.resolver }}.yaml
-        stack-arguments: --bench --no-run-benchmarks --haddock --no-haddock-deps
+        stack-yaml: stack/stack-${{ matrix.resolver }}.yaml
+        stack-arguments: --bench --no-run-benchmarks --haddock

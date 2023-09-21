@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.4.
+-- This file has been generated from package.yaml by hpack version 0.35.2.
 --
 -- see: https://github.com/sol/hpack
 
@@ -50,7 +50,7 @@ test-suite context-http-client-test-suite
       Paths_context_http_client
   hs-source-dirs:
       test-suite
-  ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
+  ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints -threaded -with-rtsopts=-N
   build-tool-depends:
       hspec-discover:hspec-discover
   build-depends:

@@ -46,3 +46,4 @@ tests:
     - context
     ghc-options:
     - -threaded
+    - -with-rtsopts=-N

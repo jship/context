@@ -49,3 +49,6 @@ tests:
     - stm
     - wai
     - warp
+    ghc-options:
+    - -threaded
+    - -with-rtsopts=-N
