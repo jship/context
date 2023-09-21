@@ -1,0 +1,6 @@
+resolver: nightly-2023-09-21
+packages:
+- ../context
+- ../context-http-client
+- ../context-resource
+- ../context-wai-middleware

@@ -1,0 +1,6 @@
+resolver: lts-20.26
+packages:
+- ../context
+- ../context-http-client
+- ../context-resource
+- ../context-wai-middleware
