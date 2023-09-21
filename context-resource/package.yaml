@@ -43,3 +43,6 @@ tests:
     - context
     - context-resource
     - hspec
+    ghc-options:
+    - -threaded
+    - -with-rtsopts=-N
