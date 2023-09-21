@@ -1,5 +1,5 @@
 name: context-wai-middleware
-version: '0.2.0.1'
+version: '0.2.0.2'
 github: "jship/context/context-wai-middleware"
 license: MIT
 license-file: LICENSE.md

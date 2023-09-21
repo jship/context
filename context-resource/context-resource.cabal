@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           context-resource
-version:        0.2.0.1
+version:        0.2.0.2
 synopsis:       Thread-safe, pool-compatible resource provider
 description:    A thread-safe, pool-compatible resource provider abstraction that supports
                 resource-sharing within nested actions.
