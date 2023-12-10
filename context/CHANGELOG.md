@@ -1,5 +1,9 @@
 # Change log
 
+## 0.2.0.3
+
+* Relax upper bound on `containers`: 0.7 -> 0.8
+
 ## 0.2.0.2
 
 * Link test suite with `-threaded` RTS option

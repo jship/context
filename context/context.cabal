@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           context
-version:        0.2.0.2
+version:        0.2.0.3
 synopsis:       Thread-indexed, nested contexts
 description:    Thread-indexed storage around arbitrary context values. The interface supports
                 nesting context values per thread, and at any point, the calling thread may
@@ -44,7 +44,7 @@ library
   ghc-options: -Wall -fwarn-tabs -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base >=4.11.1.0 && <5
-    , containers >=0.5.11.0 && <0.7
+    , containers >=0.5.11.0 && <0.8
     , exceptions >=0.10.0 && <0.11
   default-language: Haskell2010
 

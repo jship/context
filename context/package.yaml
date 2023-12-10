@@ -1,5 +1,5 @@
 name: context
-version: '0.2.0.2'
+version: '0.2.0.3'
 github: "jship/context"
 license: MIT
 license-file: LICENSE.md
@@ -28,7 +28,7 @@ ghc-options:
 library:
   dependencies:
   - base >=4.11.1.0 && <5
-  - containers >=0.5.11.0 && <0.7
+  - containers >=0.5.11.0 && <0.8
   - exceptions >=0.10.0 && <0.11
   source-dirs: library
 
