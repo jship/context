@@ -1,15 +1,7 @@
-# [context][]
+# context
 
-[![Build badge][]][build]
+This project has moved from GitHub to
+[SourceHut](https://git.sr.ht/~jship/context).
 
-This repo houses the core `context` library and libraries built on top
-of `context`. The `context` package provides thread-indexed storage
-around arbitrary context values. The interface supports nesting context
-values per thread, and at any point, the calling thread may ask for
-their current context.
-
-See the Haddocks of each package for more info on the libraries.
-
-[context]: https://github.com/jship/context
-[Build badge]: https://github.com/jship/context/workflows/CI/badge.svg
-[build]: https://github.com/jship/context/actions
+[Give Up GitHub](https://GiveUpGitHub.org) may be a useful resource if
+you are also interested in moving away from GitHub.
